@@ -1,0 +1,28 @@
+export interface MenuItem {
+  id: string;
+  name: string;
+  type: 'menu' | 'custom';
+  price: number;
+  texture?: 'hard' | 'soft';
+  flavors?: string[];
+}
+
+export interface CartItem extends MenuItem {
+  quantity: number;
+}
+
+export interface UserInfo {
+  name: string;
+  email: string;
+  address: string;
+  phone: string;
+}
+
+export interface Order {
+  id: string;
+  user: UserInfo;
+  items: CartItem[];
+  total: number;
+  status: 'pending' | 'preparing' | 'ready' | 'completed';
+  createdAt: Date;
+}
