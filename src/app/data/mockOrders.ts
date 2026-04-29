@@ -1,0 +1,137 @@
+import { Order } from "../types";
+
+export const mockOrders: Order[] = [
+  {
+    id: "ORDER-1713891234567",
+    user: {
+      name: "Alice Johnson",
+      email: "alice@example.com",
+      address: "123 Oak Street, New York, NY 10001",
+      phone: "+1 (555) 123-4567",
+    },
+    items: [
+      {
+        id: "triple-chocolate",
+        name: "Triple Chocolate",
+        type: "menu",
+        price: 3.99,
+        texture: "soft",
+        flavors: ["chocolate"],
+        quantity: 3,
+      },
+      {
+        id: "marshmallow",
+        name: "Marshmallow Delight",
+        type: "menu",
+        price: 3.99,
+        texture: "soft",
+        flavors: ["vanilla", "marshmallow"],
+        quantity: 2,
+      },
+    ],
+    total: 19.95,
+    status: "completed",
+    createdAt: new Date("2026-04-20T10:30:00"),
+  },
+  {
+    id: "ORDER-1713977634567",
+    user: {
+      name: "Bob Smith",
+      email: "bob@example.com",
+      address: "456 Maple Avenue, Los Angeles, CA 90001",
+      phone: "+1 (555) 234-5678",
+    },
+    items: [
+      {
+        id: "custom-1713977634567",
+        name: "Custom Cookie (vanilla, choc chip, rainbow)",
+        type: "custom",
+        price: 4.99,
+        texture: "hard",
+        flavors: ["vanilla", "choc chip", "rainbow"],
+        quantity: 5,
+      },
+    ],
+    total: 24.95,
+    status: "ready",
+    createdAt: new Date("2026-04-21T14:15:00"),
+  },
+  {
+    id: "ORDER-1714064034567",
+    user: {
+      name: "Carol Davis",
+      email: "carol@example.com",
+      address: "789 Pine Road, Chicago, IL 60601",
+      phone: "+1 (555) 345-6789",
+    },
+    items: [
+      {
+        id: "triple-chocolate",
+        name: "Triple Chocolate",
+        type: "menu",
+        price: 3.99,
+        texture: "soft",
+        flavors: ["chocolate"],
+        quantity: 6,
+      },
+    ],
+    total: 23.94,
+    status: "preparing",
+    createdAt: new Date("2026-04-22T09:45:00"),
+  },
+  {
+    id: "ORDER-1714150434567",
+    user: {
+      name: "David Wilson",
+      email: "david@example.com",
+      address: "321 Birch Lane, Houston, TX 77001",
+      phone: "+1 (555) 456-7890",
+    },
+    items: [
+      {
+        id: "marshmallow",
+        name: "Marshmallow Delight",
+        type: "menu",
+        price: 3.99,
+        texture: "soft",
+        flavors: ["vanilla", "marshmallow"],
+        quantity: 4,
+      },
+      {
+        id: "custom-1714150434567",
+        name: "Custom Cookie (pistachio, almond)",
+        type: "custom",
+        price: 4.99,
+        texture: "hard",
+        flavors: ["pistachio", "almond"],
+        quantity: 2,
+      },
+    ],
+    total: 25.94,
+    status: "pending",
+    createdAt: new Date("2026-04-23T08:20:00"),
+  },
+  {
+    id: "ORDER-1714064434567",
+    user: {
+      name: "Eve Martinez",
+      email: "eve@example.com",
+      address: "654 Cedar Court, Phoenix, AZ 85001",
+      phone: "+1 (555) 567-8901",
+    },
+    items: [
+      {
+        id: "custom-1714064434567",
+        name: "Custom Cookie (red velvet, oreo)",
+        type: "custom",
+        price: 4.99,
+        texture: "soft",
+        flavors: ["red velvet", "oreo"],
+        quantity: 8,
+      },
+    ],
+    total: 39.92,
+    status: "completed",
+    createdAt: new Date("2026-04-19T16:00:00"),
+  },
+];
