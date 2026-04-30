@@ -16,6 +16,7 @@ export interface UserInfo {
   email: string;
   address: string;
   phone: string;
+  role: 'user' | 'admin';
 }
 
 export interface Order {

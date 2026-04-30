@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { mockOrders } from "../data/mockOrders";
-import { Order } from "../types";
+import { mockOrders } from "../../data/mockOrders";
+import { Order } from "../../types";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Edit, TrendingUp, DollarSign, ShoppingCart, Users } from "lucide-react";
 

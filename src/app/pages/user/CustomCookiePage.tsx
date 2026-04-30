@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useCart } from "../hooks/useCart";
-import { MenuItem } from "../types";
+import { useCart } from "../../hooks/useCart";
+import { MenuItem } from "../../types";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 

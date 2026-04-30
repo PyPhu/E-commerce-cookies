@@ -1,23 +1,47 @@
 import { createBrowserRouter } from "react-router";
-import { HomePage } from "./pages/HomePage";
-import { CustomCookiePage } from "./pages/CustomCookiePage";
-import { CartPage } from "./pages/CartPage";
-import { CheckoutPage } from "./pages/CheckoutPage";
-import { AdminPage } from "./pages/AdminPage";
-import { UserProfilePage } from "./pages/UserProfilePage";
+import { HomePage } from "./pages/user/HomePage";
+import { CustomCookiePage } from "./pages/user/CustomCookiePage";
+import { CartPage } from "./pages/user/CartPage";
+import { CheckoutPage } from "./pages/user/CheckoutPage";
+import { AdminPage } from "./pages/admin/AdminPage";
+import { UserProfilePage } from "./pages/user/UserProfilePage";
+import { LoginPage } from "./pages/user/LoginPage";
 import { Layout } from "./components/Layout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
+const isAuthenticated = () => {
+  const data = localStorage.getItem('user');
+  if (!data) return null;
+  return JSON.parse(data);
+};
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    Component: Layout,
+    path: '/',
+    element: <Layout />,
     children: [
-      { index: true, Component: HomePage },
-      { path: "custom", Component: CustomCookiePage },
-      { path: "cart", Component: CartPage },
-      { path: "checkout", Component: CheckoutPage },
-      { path: "profile", Component: UserProfilePage },
-      { path: "admin", Component: AdminPage },
+      { path: 'login', element: <LoginPage /> },
+
+      // --- User ---
+      {
+        element: <ProtectedRoute isAllowed={!!isAuthenticated()} />,
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'custom-cookie', element: <CustomCookiePage /> },
+          { path: 'cart', element: <CartPage /> },
+          { path: 'checkout', element: <CheckoutPage /> },
+          { path: 'profile', element: <UserProfilePage /> }
+        ]
+      },
+      
+      // --- Admin ---
+      {
+        path: 'admin',
+        element: <ProtectedRoute isAllowed={isAuthenticated()?.role === "admin"} />,
+        children: [
+          { path: 'admin', element: <AdminPage /> }
+        ],
+      },
     ],
   },
 ]);

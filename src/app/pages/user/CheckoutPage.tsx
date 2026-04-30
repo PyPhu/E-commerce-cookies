@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useCart } from "../hooks/useCart";
+import { useCart } from "../../hooks/useCart";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { QrCode, Mail } from "lucide-react";
-import { UserInfo } from "../types";
+import { UserInfo } from "../../types";
 
 export function CheckoutPage() {
   const navigate = useNavigate();

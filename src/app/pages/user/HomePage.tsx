@@ -1,5 +1,5 @@
-import { useCart } from "../hooks/useCart";
-import { MenuItem } from "../types";
+import { useCart } from "../../hooks/useCart";
+import { MenuItem } from "../../types";
 import { toast } from "sonner";
 import { Cookie, Plus } from "lucide-react";
 
@@ -72,7 +72,7 @@ export function HomePage() {
           Create your own unique cookie with your choice of texture and flavors!
         </p>
         <a
-          href="/custom"
+          href="/custom-cookie"
           className="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700"
         >
           Build Your Cookie

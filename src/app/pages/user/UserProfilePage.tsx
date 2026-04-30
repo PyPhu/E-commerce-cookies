@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserInfo, Order } from "../types";
+import { UserInfo, Order } from "../../types";
 import { User, Package, MapPin, Mail, Phone, Edit2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
