@@ -1,69 +1,74 @@
-import { Outlet, Link, useLocation } from "react-router";
+import { Outlet, Link, useLocation, Navigate } from "react-router";
 import { ShoppingCart, Cookie, User } from "lucide-react";
-import { useCart } from "../hooks/useCart";
+import { RiAdminFill } from "react-icons/ri";
 
-export function Layout() {
-  const location = useLocation();
-  const { cart } = useCart();
-  const isAdmin = location.pathname.startsWith('/admin');
+// admin guard
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const isAdmin = true; // replace with actual admin check logic
 
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
 
+// menu
+function UserMenu() {
   return (
+    <nav className="flex gap-4">
+      <Link to="cart">
+        <ShoppingCart className="w-5 h-5" />
+        <span className="sr-only">Cart</span>
+      </Link>
+      <Link to="profile">
+        <User className="w-5 h-5" />
+        <span className="sr-only">Profile</span>
+      </Link>
+    </nav>
+  );
+}
+
+function AdminMenu() {
+  return (
+    <nav className="flex gap-4">
+      <Link to="/admin">
+        <RiAdminFill className="w-5 h-5" />
+        <span className="sr-only">Admin</span>
+      </Link>
+    </nav>
+  );
+}
+
+//header
+function Header({ isAdminPath }: { isAdminPath: boolean }) {
+  return (
+    <header className="flex justify-between p-4 bg-white shadow">
+      <Link to="/" className="flex items-center gap-2">
+        <Cookie className="w-6 h-6" />
+        <span className="font-bold">Cookie Shop</span>
+      </Link>
+
+      {isAdminPath ? <AdminMenu /> : <UserMenu />}
+
+      <Link to={isAdminPath ? "/" : "/admin"}>
+        {isAdminPath ? "Shop" : "Admin"}
+      </Link>
+    </header>
+  );
+}
+
+//layout
+export function Layout(){
+  const location = useLocation();
+  const isAdminPath = location.pathname.startsWith("/admin");
+
+  return(
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <Cookie className="w-8 h-8 text-amber-600" />
-              <span className="font-bold text-xl">Cookie Shop</span>
-            </Link>
-
-            {!isAdmin && (
-              <nav className="flex items-center gap-6">
-                <Link
-                  to="/"
-                  className={location.pathname === '/' ? 'text-amber-600' : 'text-gray-600 hover:text-amber-600'}
-                >
-                  Menu
-                </Link>
-                <Link
-                  to="/custom"
-                  className={location.pathname === '/custom' ? 'text-amber-600' : 'text-gray-600 hover:text-amber-600'}
-                >
-                  Custom Cookie
-                </Link>
-                <Link
-                  to="/profile"
-                  className={location.pathname === '/profile' ? 'text-amber-600' : 'text-gray-600 hover:text-amber-600'}
-                >
-                  Profile
-                </Link>
-                <Link to="/cart" className="relative">
-                  <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-amber-600" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-              </nav>
-            )}
-
-            <Link
-              to={isAdmin ? '/' : '/admin'}
-              className="flex items-center gap-2 text-gray-600 hover:text-amber-600"
-            >
-              <User className="w-5 h-5" />
-              <span className="text-sm">{isAdmin ? 'Shop' : 'Admin'}</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main>
-        <Outlet />
-      </main>
+      <Header isAdminPath={isAdminPath} />
+      <Outlet />
     </div>
   );
 }
+
+/* export guard ไปใช้ใน router */
+export { AdminOnly };
