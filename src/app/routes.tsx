@@ -6,6 +6,7 @@ import { CheckoutPage } from "./pages/user/CheckoutPage";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { UserProfilePage } from "./pages/user/UserProfilePage";
 import { Layout, AdminOnly } from "./components/Layout";
+import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
       { path: 'profile', element: <UserProfilePage /> },
+      { path: "/message-board", element: <MessageBoardPage /> },
       
       // Admin
       {
