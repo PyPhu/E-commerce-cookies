@@ -1,0 +1,7 @@
+@font-face {
+    font-family: "Cheerful-Notes";
+    src: local('Cheerful-Notes'),
+        url('../fonts/cheerful-notes.regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
