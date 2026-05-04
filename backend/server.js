@@ -37,8 +37,8 @@ app.post("/create-checkout-session", async (req, res) => {
             payment_method_types: ['promptpay'], 
             line_items,
             mode: "payment",
-            success_url: `${YOUR_DOMAIN}/success`,
-            cancel_url: `${YOUR_DOMAIN}/cancel`,
+            success_url: `http://localhost:5173/success`,
+            cancel_url: `http://localhost:5173/cancel`,
         });
 
         res.json({url: session.url });
