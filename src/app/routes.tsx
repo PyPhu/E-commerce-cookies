@@ -6,7 +6,11 @@ import { CheckoutPage } from "./pages/user/CheckoutPage";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { UserProfilePage } from "./pages/user/UserProfilePage";
 import { Layout, AdminOnly } from "./components/Layout";
+<<<<<<< HEAD
 import { SuccessPage } from "./pages/user/SuccessPage";
+=======
+import { MessageBoardPage } from "./pages/user/MessageBoardPage";
+>>>>>>> chalamm
 
 export const router = createBrowserRouter([
   {
@@ -19,7 +23,11 @@ export const router = createBrowserRouter([
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
       { path: 'profile', element: <UserProfilePage /> },
+<<<<<<< HEAD
       { path: 'success', element: <SuccessPage /> },
+=======
+      { path: "/message-board", element: <MessageBoardPage /> },
+>>>>>>> chalamm
       
       // Admin
       {
