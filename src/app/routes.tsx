@@ -5,14 +5,16 @@ import { CartPage } from "./pages/user/CartPage";
 import { CheckoutPage } from "./pages/user/CheckoutPage";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { UserProfilePage } from "./pages/user/UserProfilePage";
-import { Layout, AdminOnly } from "./components/Layout";
+import { UserLayout } from "./components/Layout";
+import { AdminLayout } from "./components/AdminLayout";
+import { AdminOnly } from "./components/AdminOnly";
 import { SuccessPage } from "./pages/user/SuccessPage";
 import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: <UserLayout />,
     children: [
       // User
       { index: true, element: <HomePage /> },
@@ -22,16 +24,19 @@ export const router = createBrowserRouter([
       { path: 'profile', element: <UserProfilePage /> },
       { path: 'success', element: <SuccessPage /> },
       { path: "/message-board", element: <MessageBoardPage /> },
-      
-      // Admin
-      {
-        path: 'admin',
-       element: (
-          <AdminOnly>
-            <AdminPage />
-          </AdminOnly>
-       ),
-      },
+
     ],
   },
+  //admin
+  {
+    path: '/admin',
+    element: (
+      <AdminOnly>
+        <AdminLayout />
+      </AdminOnly>
+    ),
+    children: [
+      { index: true, element: <AdminPage /> },
+    ]
+  }
 ]);

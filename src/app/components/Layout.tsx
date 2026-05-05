@@ -1,74 +1,32 @@
-import { Outlet, Link, useLocation, Navigate } from "react-router";
+import { Outlet, Link } from "react-router";
 import { ShoppingCart, Cookie, User } from "lucide-react";
-import { RiAdminFill } from "react-icons/ri";
 
-// admin guard
-function AdminOnly({ children }: { children: React.ReactNode }) {
-  const isAdmin = true; // replace with actual admin check logic
-
-  if (!isAdmin) {
-    return <Navigate to="/" replace />;
-  }
-  return children;
-}
-
-// menu
-function UserMenu() {
+export function UserLayout() {
   return (
-    <nav className="flex gap-4">
-      <Link to="cart">
-        <ShoppingCart className="w-5 h-5" />
-        <span className="sr-only">Cart</span>
-      </Link>
-      <Link to="profile">
-        <User className="w-5 h-5" />
-        <span className="sr-only">Profile</span>
-      </Link>
-    </nav>
-  );
-}
+    <div className="min-h-screen bg-gray-50">
+      <header className="flex justify-between items-center p-4 bg-white shadow">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2">
+          <Cookie className="w-6 h-6" />
+          <span className="text-2xl font-bold">Kamin Cookies</span>
+        </Link>
 
-function AdminMenu() {
-  return (
-    <nav className="flex gap-4">
-      <Link to="/admin">
-        <RiAdminFill className="w-5 h-5" />
-        <span className="sr-only">Admin</span>
-      </Link>
-    </nav>
-  );
-}
+        {/* User Navigation */}
+        <nav className="flex gap-6 items-center">
+          <Link to="/cart" className="flex items-right gap-1">
+            <ShoppingCart className="w-5 h-5" />
+            <span className="hidden sm:inline">Cart</span>
+          </Link>
+          <Link to="/profile" className="flex items-right gap-1">
+            <User className="w-5 h-5" />
+            <span className="hidden sm:inline">Profile</span>
+          </Link>
+        </nav>
+      </header>
 
-//header
-function Header({ isAdminPath }: { isAdminPath: boolean }) {
-  return (
-    <header className="flex justify-between items-center p-4 bg-[#fff4e9] shadow">
-      <Link to="/" className="flex items-center gap-2">
-        <Cookie className="w-6 h-6" />
-        <span className="text-2xl">Kamin Cookies</span>
-      </Link>
-
-      {isAdminPath ? <AdminMenu /> : <UserMenu />}
-
-      <Link to={isAdminPath ? "/" : "/admin"}>
-        {isAdminPath ? "Shop" : "Admin"}
-      </Link>
-    </header>
-  );
-}
-
-//layout
-export function Layout() {
-  const location = useLocation();
-  const isAdminPath = location.pathname.startsWith("/admin");
-
-  return (
-    <div className="min-h-screen bg-[#fdf9f6]">
-      <Header isAdminPath={isAdminPath} />
-      <Outlet />
+      <main>
+        <Outlet />
+      </main>
     </div>
   );
 }
-
-/* export guard ไปใช้ใน router */
-export { AdminOnly };
