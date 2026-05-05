@@ -8,7 +8,7 @@ import { UserInfo } from "../../types";
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { cart, totalPrice } = useCart();
-  
+
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
     const stored = localStorage.getItem('cookie-shop-user');
     return stored ? JSON.parse(stored) : {
@@ -120,16 +120,17 @@ export function CheckoutPage() {
               <Mail className="w-5 h-5" />
               ชำระเงินด้วย PromptPay
             </button>
-          </form>
 
-          {/* ปุ่มเสริมที่ทำให้ดูเหมือนเดิม แต่ฟังก์ชันจะวิ่งไปจ่ายเงินจริง */}
-          <button
-            onClick={() => handleCheckout()}
-            className="w-full mt-4 border-2 border-amber-600 text-amber-600 py-3 rounded-lg hover:bg-amber-50 flex items-center justify-center gap-2 font-semibold"
-          >
-            <QrCode className="w-5 h-5" />
-            แสดง QR Code สำหรับชำระเงิน
-          </button>
+            {/* สำหรับเทสการยกเลิกการชำระเงิน (ลบออกได้หลังจากทดสอบ) */}
+            // ใน CheckoutPage.tsx (ใส่ไว้ชั่วคราวเพื่อเทส)
+            <button
+              onClick={() => window.location.href = '/cancel'}
+              className="text-sm text-gray-400 underline"
+            >
+              Test: Simulate Cancel Payment
+            </button>
+          </form>
+          
         </div>
 
         {/* ฝั่งสรุปคำสั่งซื้อ */}

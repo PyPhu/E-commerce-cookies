@@ -10,6 +10,7 @@ import { AdminLayout } from "./components/AdminLayout";
 import { AdminOnly } from "./components/AdminOnly";
 import { SuccessPage } from "./pages/user/SuccessPage";
 import { MessageBoardPage } from "./pages/user/MessageBoardPage";
+import { CancelPage } from "./pages/user/CancelPage";
 
 export const router = createBrowserRouter([
   {
@@ -24,7 +25,7 @@ export const router = createBrowserRouter([
       { path: 'profile', element: <UserProfilePage /> },
       { path: 'success', element: <SuccessPage /> },
       { path: "/message-board", element: <MessageBoardPage /> },
-
+      { path: "cancel", element: <CancelPage /> }
     ],
   },
   //admin

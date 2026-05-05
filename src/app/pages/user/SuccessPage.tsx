@@ -21,7 +21,7 @@ export function SuccessPage() {
     }, []);
 
     return(
-        <div className='min-h-[80nh] flex items-center justify-center px-4'>
+        <div className='min-h-[80vh] flex items-center justify-center px-4'>
             <div className='max-w-md w-full text-center bg-white p-8 rounded-2xl shadow-xl'>
                 <div className='flex justify-center mb-6'>
                     <CheckCircle2 className="w-20 h-20 text-green-500 animate-bounce" /> 
@@ -32,7 +32,7 @@ export function SuccessPage() {
                 Your order will be processed shortly.</p>
 
                 <div>
-                    <Link to='/profile ' className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    <Link to='/profile' className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         View Order Details
                     </Link>
                 </div>
