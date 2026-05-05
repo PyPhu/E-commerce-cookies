@@ -42,7 +42,7 @@ function AdminMenu() {
 //header
 function Header({ isAdminPath }: { isAdminPath: boolean }) {
   return (
-    <header className="flex justify-between items-center p-4 bg-white shadow">
+    <header className="flex justify-between items-center p-4 bg-[#fff4e9] shadow">
       <Link to="/" className="flex items-center gap-2">
         <Cookie className="w-6 h-6" />
         <span className="text-2xl">Kamin Cookies</span>
@@ -63,7 +63,7 @@ export function Layout() {
   const isAdminPath = location.pathname.startsWith("/admin");
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fdf9f6]">
       <Header isAdminPath={isAdminPath} />
       <Outlet />
     </div>
