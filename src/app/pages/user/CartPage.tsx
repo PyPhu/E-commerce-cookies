@@ -1,10 +1,31 @@
 import { useCart } from "../../hooks/useCart";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router";
+import { supabase } from "../../../../backend/supabaseClient";
+import { useEffect, useState } from "react";
 
 export function CartPage() {
   const navigate = useNavigate();
-  const { cart, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart();
+  const { cart, updateQuantity, removeFromCart, totalPrice, totalItems, setCart } = useCart();
+
+  useEffect(() => {
+  const loadCartData = async () => {
+    try {
+      const dbData = await fetchCart();
+      if (dbData && dbData.length > 0) {
+        // แปลงข้อมูลจาก snake_case ใน DB เป็น format ที่ UI ต้องการ
+        const formattedCart = dbData.map((item: any) => ({
+          ...item,
+          id: item.product_id, // for UI to see 'product_id' to be  'id'
+        }));
+        setCart(formattedCart);
+      }
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+    }
+  };
+  loadCartData();
+}, [setCart]);
 
   if (cart.length === 0) {
     return (
@@ -23,6 +44,44 @@ export function CartPage() {
       </div>
     );
   }
+
+  //pull data from supabase and display it in the cart page
+  // 1. ฟังก์ชันดึงข้อมูล (ดึง userId ภายในฟังก์ชัน)
+const fetchCart = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("cart_items")
+    .select("*")
+    .eq('user_id', user.id);
+
+  if (error) throw error;
+  return data;
+};
+
+// 2. ฟังก์ชันเพิ่ม/อัปเดต (ใช้ .upsert แทน .insert)
+const addToCart = async (product: any) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data, error } = await supabase
+    .from("cart_items")
+    .upsert({ 
+      user_id: user.id, 
+      product_id: product.id, 
+      name: product.name,
+      price: product.price,
+      quantity: product.quantity,
+      texture: product.texture,
+      flavors: product.flavors
+    }, { 
+      onConflict: 'user_id, product_id' 
+    });
+
+  if (error) console.error("Error:", error.message);
+};
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
