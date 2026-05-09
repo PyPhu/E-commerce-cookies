@@ -10,18 +10,20 @@ export function CartPage() {
 
   useEffect(() => {
   const loadCartData = async () => {
-    try {
-      const dbData = await fetchCart();
-      if (dbData && dbData.length > 0) {
-        // แปลงข้อมูลจาก snake_case ใน DB เป็น format ที่ UI ต้องการ
-        const formattedCart = dbData.map((item: any) => ({
-          ...item,
-          id: item.product_id, // for UI to see 'product_id' to be  'id'
-        }));
-        setCart(formattedCart);
-      }
-    } catch (error) {
-      console.error("Error fetching cart:", error);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq('user_id', user.id);
+
+    if (data && data.length > 0) {
+      const formattedCart = data.map((item: any) => ({
+        ...item,
+        id: item.product_id, // Map product_id กลับมาเป็น id ให้ตรงกับ Interface ของเรา
+      }));
+      setCart(formattedCart);
     }
   };
   loadCartData();
@@ -61,27 +63,6 @@ const fetchCart = async () => {
   return data;
 };
 
-// 2. ฟังก์ชันเพิ่ม/อัปเดต (ใช้ .upsert แทน .insert)
-const addToCart = async (product: any) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const { data, error } = await supabase
-    .from("cart_items")
-    .upsert({ 
-      user_id: user.id, 
-      product_id: product.id, 
-      name: product.name,
-      price: product.price,
-      quantity: product.quantity,
-      texture: product.texture,
-      flavors: product.flavors
-    }, { 
-      onConflict: 'user_id, product_id' 
-    });
-
-  if (error) console.error("Error:", error.message);
-};
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">

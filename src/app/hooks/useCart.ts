@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CartItem, MenuItem } from '../types';
 import { supabase } from "../../../backend/supabaseClient";
 
@@ -10,24 +10,32 @@ export function useCart() {
     return stored ? JSON.parse(stored) : [];
   });
 
-  // Sync with LocalStorage (in case does not Login)
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
 
+  // ใช้ useCallback เพื่อให้ฟังก์ชันไม่ถูกสร้างใหม่ทุกครั้งที่ re-render
+  // ป้องกัน infinite loop ใน CartPage
+  const syncSetCart = useCallback((newCart: CartItem[]) => {
+    setCart(newCart);
+  }, []);
+
   const addToCart = async (item: MenuItem) => {
-    // 1. จัดการ Local State ก่อน
+    let latestQuantity = 1;
+
+    // 1. Update Local State และหา Quantity ล่าสุดไปพร้อมกัน
     setCart(prevCart => {
       const existingItem = prevCart.find(i => i.id === item.id);
       if (existingItem) {
+        latestQuantity = existingItem.quantity + 1;
         return prevCart.map(i =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id ? { ...i, quantity: latestQuantity } : i
         );
       }
       return [...prevCart, { ...item, quantity: 1 }];
     });
 
-    // 2. ถ้า Login อยู่ ให้ส่งไป Supabase ด้วย
+    // 2. Sync กับ Supabase
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { error } = await supabase
@@ -37,7 +45,7 @@ export function useCart() {
           product_id: item.id,
           name: item.name,
           price: item.price,
-          quantity: 1, // หรือคำนวณจำนวนที่ถูกต้อง
+          quantity: latestQuantity, 
           texture: item.texture,
           flavors: item.flavors
         }, { onConflict: 'user_id, product_id' });
@@ -48,8 +56,6 @@ export function useCart() {
 
   const removeFromCart = async (itemId: string) => {
     setCart(prevCart => prevCart.filter(item => item.id !== itemId));
-
-    // delete in supabase too
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase
@@ -65,17 +71,15 @@ export function useCart() {
       removeFromCart(itemId);
       return;
     }
-    // update local
     setCart(prevCart =>
       prevCart.map(item =>
         item.id === itemId ? { ...item, quantity } : item
       )
     );
-    // update in supabase too
-    const { data: {user}} = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase
-        .from ('cart_items')
+        .from('cart_items')
         .update({ quantity })
         .eq('user_id', user.id)
         .eq('product_id', itemId);
@@ -87,7 +91,6 @@ export function useCart() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('cart_items').delete().eq('user_id', user.id);
-
     }
   };
 
@@ -96,7 +99,7 @@ export function useCart() {
 
   return {
     cart,
-    setCart, // ส่งตัวนี้ออกไปให้ CartPage ใช้ตอน Load ข้อมูลครั้งแรก
+    setCart: syncSetCart, // ใช้ฟังก์ชันที่ผ่าน useCallback แล้ว
     addToCart,
     removeFromCart,
     updateQuantity,
