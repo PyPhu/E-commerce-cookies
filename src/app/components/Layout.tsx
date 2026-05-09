@@ -8,7 +8,7 @@ export function UserLayout() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <Cookie className="w-6 h-6" />
-          <span className="text-2xl font-bold">Kamin Cookies</span>
+          <span className="text-2xl font-bold">cookiekamin</span>
         </Link>
 
         {/* User Navigation */}
