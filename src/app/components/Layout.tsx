@@ -4,11 +4,11 @@ import { ShoppingCart, Cookie, User } from "lucide-react";
 export function UserLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="flex justify-between items-center p-4 bg-white shadow">
+      <header className="sticky top-0 flex justify-between items-center p-4 bg-white shadow">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <Cookie className="w-6 h-6" />
-          <span className="text-2xl font-bold">Cookiekamin</span>
+          <span className="text-2xl font-bold">Kamin Cookies</span>
         </Link>
 
         {/* User Navigation */}
