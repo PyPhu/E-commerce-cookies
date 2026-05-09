@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { UserInfo, Order } from "../../types";
 import { User, Package, MapPin, Mail, Phone, Edit2, Save, X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "../../../../backend/supabaseClient";
 
 const USER_STORAGE_KEY = 'cookie-shop-user';
 const ORDERS_STORAGE_KEY = 'cookie-shop-user-orders';
@@ -28,11 +29,25 @@ export function UserProfilePage() {
 
   const hasProfile = userInfo.name && userInfo.email;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editedInfo.name || !editedInfo.email || !editedInfo.address || !editedInfo.phone) {
       toast.error("Please fill in all fields");
       return;
     }
+
+  const { error } = await supabase
+    .from('customers')
+    .upsert({
+      name: editedInfo.name,
+      email: editedInfo.email,
+      phone: editedInfo.phone,
+      address: editedInfo.address,
+    }, { onConflict: 'email' }); // updates if email already exists
+
+  if (error) {
+    toast.error("Failed to save profile: " + error.message);
+    return;
+  }
 
     setUserInfo(editedInfo);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(editedInfo));
@@ -44,6 +59,9 @@ export function UserProfilePage() {
     setEditedInfo(userInfo);
     setIsEditing(false);
   };
+
+
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
