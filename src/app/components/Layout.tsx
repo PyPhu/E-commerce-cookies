@@ -4,7 +4,7 @@ import { ShoppingCart, Cookie, User } from "lucide-react";
 export function UserLayout() {
   return (
     <div className="min-h-screen bg-[#fdf9f6]">
-      <header className="flex justify-between items-center p-4 bg-[#fff4e9] shadow">
+      <header className="flex justify-between items-center p-4 bg-[#fff4e9] shadow gm-0 sticky top-0 z-10">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <Cookie className="w-6 h-6" />
