@@ -11,6 +11,9 @@ import { AdminOnly } from "./components/AdminOnly";
 import { SuccessPage } from "./pages/user/SuccessPage";
 import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 import { CancelPage } from "./pages/user/CancelPage";
+import { LoginPage } from "./pages/user/Register/LogIn";
+import { ForgotPasswordPage } from "./pages/user/Register/ForgetpassPage";
+import { RegisterPage } from "./pages/user/Register/RegisterPage";
 
 export const router = createBrowserRouter([
   {
@@ -25,9 +28,13 @@ export const router = createBrowserRouter([
       { path: 'profile', element: <UserProfilePage /> },
       { path: 'success', element: <SuccessPage /> },
       { path: "/message-board", element: <MessageBoardPage /> },
-      { path: "cancel", element: <CancelPage /> }
+      { path: "cancel", element: <CancelPage /> },
     ],
   },
+  //auth page (no userlayout)
+  { path :  "login", element :  <LoginPage /> },
+  { path :  "forgot-password", element :  <ForgotPasswordPage /> },
+  { path :  "register", element :  <RegisterPage /> },
   //admin
   {
     path: '/admin',
