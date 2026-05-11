@@ -1,14 +1,138 @@
-import { useState } from "react";
-import { mockOrders } from "../../data/mockOrders";
+import { useEffect, useState } from "react";
 import { Order } from "../../types";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Edit, TrendingUp, DollarSign, ShoppingCart, Users } from "lucide-react";
+import { supabase } from "../../../../backend/supabaseClient";
 
 const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444"];
 
+// TODO: change to real cookie prices
+const COOKIE_PRICES: Record<string, number> = {
+  "triple chocolate": 35,
+  "marshmallow delight": 35,
+  custom: 4.99,
+};
+
+type OrderRow = {
+  id: number;
+  created_at: string;
+  customers:
+  | {
+    name: string;
+    email: string;
+    phone: string | null;
+    address: string | null;
+  }
+  | Array<{
+    name: string;
+    email: string;
+    phone: string | null;
+    address: string | null;
+  }>
+  | null;
+  order_items: Array<{
+    id: number;
+    cookie_type: string | null;
+    flavor: string | null;
+    toppings: string[] | null;
+    quantity: number | null;
+  }> | null;
+};
+
+function formatSupabaseOrders(rows: OrderRow[]): Order[] {
+  return rows.map((row) => {
+    const customer = Array.isArray(row.customers) ? row.customers[0] : row.customers;
+    const orderItems = Array.isArray(row.order_items) ? row.order_items : row.order_items ?? [];
+    const items = orderItems.map((item) => {
+      const cookieType = item.cookie_type?.trim() || "Custom Cookie";
+      const isCustom = cookieType.toLowerCase().includes("custom");
+      const flavors = [item.flavor, ...(item.toppings ?? [])].filter(
+        (flavor): flavor is string => Boolean(flavor)
+      );
+      const normalizedKey = cookieType.toLowerCase();
+      const price = COOKIE_PRICES[normalizedKey] ?? (isCustom ? COOKIE_PRICES.custom : 0);
+
+      return {
+        id: String(item.id),
+        name: isCustom && flavors.length > 0 ? `Custom Cookie (${flavors.join(", ")})` : cookieType,
+        type: isCustom ? ("custom" as const) : ("menu" as const),
+        price,
+        flavors: flavors.length > 0 ? flavors : undefined,
+        quantity: item.quantity ?? 0,
+      };
+    });
+
+    return {
+      id: String(row.id),
+      user: {
+        name: customer?.name ?? "Unknown Customer",
+        email: customer?.email ?? "",
+        phone: customer?.phone ?? "",
+        address: customer?.address ?? "",
+        role: "user",
+      },
+      items,
+      total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      status: "pending",
+      createdAt: new Date(row.created_at),
+    };
+  });
+}
+
 export function AdminPage() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadOrders = async () => {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          created_at,
+          customers (
+            name,
+            email,
+            phone,
+            address
+          ),
+          order_items (
+            id,
+            cookie_type,
+            flavor,
+            toppings,
+            quantity
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (!isActive) {
+        return;
+      }
+
+      if (fetchError) {
+        setError(fetchError.message);
+        setOrders([]);
+      } else {
+        setOrders(formatSupabaseOrders((data ?? []) as unknown as OrderRow[]));
+      }
+
+      setLoading(false);
+    };
+
+    loadOrders();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleStatusChange = (orderId: string, newStatus: Order["status"]) => {
     setOrders(prevOrders =>
@@ -93,6 +217,26 @@ export function AdminPage() {
     });
     return acc;
   }, [] as Array<{ flavor: string; count: number }>).sort((a, b) => b.count - a.count);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-600">
+          Loading admin data...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-lg shadow-md p-6 border border-red-200 text-red-700">
+          Failed to load admin data: {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -258,15 +402,14 @@ export function AdminPage() {
                       </select>
                     ) : (
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-sm capitalize ${
-                          order.status === "completed"
-                            ? "bg-green-100 text-green-700"
-                            : order.status === "ready"
+                        className={`inline-block px-3 py-1 rounded-full text-sm capitalize ${order.status === "completed"
+                          ? "bg-green-100 text-green-700"
+                          : order.status === "ready"
                             ? "bg-blue-100 text-blue-700"
                             : order.status === "preparing"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
                       >
                         {order.status}
                       </span>
