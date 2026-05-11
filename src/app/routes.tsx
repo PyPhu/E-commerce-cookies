@@ -11,6 +11,7 @@ import { AdminOnly } from "./components/AdminOnly";
 import { SuccessPage } from "./pages/user/SuccessPage";
 import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 import { CancelPage } from "./pages/user/CancelPage";
+import { LoginPage } from "./pages/user/LoginPage";
 
 export const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
     children: [
       // User
       { index: true, element: <HomePage /> },
+      { path: 'login', element: <LoginPage /> },
       { path: 'custom-cookie', element: <CustomCookiePage /> },
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
