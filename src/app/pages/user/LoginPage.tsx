@@ -2,12 +2,13 @@ import { useState } from "react";
 import { LogIn, UserPlus, ShoppingCart, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
-import { Navigate } from "react-router";
-import { HomePage } from "./HomePage";
+import { useNavigate } from "react-router";
+
 
 type Tab = "login" | "signup";
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("login");
 
   // Login state
@@ -52,9 +53,8 @@ export function LoginPage() {
         address: data.address,
       }));
     }
-
+    navigate("/");
     toast.success("Signed in — welcome back! 🍪");
-    return <Navigate to="/" />;
   };
 
   const handleSignup = async () => {
