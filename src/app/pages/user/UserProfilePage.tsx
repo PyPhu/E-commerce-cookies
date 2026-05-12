@@ -3,11 +3,18 @@ import { UserInfo, Order } from "../../types";
 import { User, Package, MapPin, Mail, Phone, Edit2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
+import { useNavigate } from "react-router";
 
 const USER_STORAGE_KEY = 'cookie-shop-user';
 const ORDERS_STORAGE_KEY = 'cookie-shop-user-orders';
 
 export function UserProfilePage() {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate("/login");
+  };
+  
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
     const stored = localStorage.getItem(USER_STORAGE_KEY);
@@ -87,10 +94,10 @@ export function UserProfilePage() {
                 <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-600 mb-4">No profile information yet</p>
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => handleClick()}
                   className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
                 >
-                  Create Profile
+                  Login
                 </button>
               </div>
             ) : isEditing ? (
