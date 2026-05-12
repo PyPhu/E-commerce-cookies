@@ -4,10 +4,24 @@ import { toast } from "sonner";
 import { QrCode, Mail } from "lucide-react";
 import { useState } from "react";
 import { UserInfo } from "../../types";
+import { useEffect } from "react";
+import { supabase } from "../../../../backend/supabaseClient";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { cart, totalPrice } = useCart();
+
+    // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to continue checkout");
+        navigate("/login");
+      }
+    };
+    checkAuth();
+  }, []);
 
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
     const stored = localStorage.getItem('cookie-shop-user');

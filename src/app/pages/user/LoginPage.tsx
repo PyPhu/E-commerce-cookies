@@ -2,6 +2,8 @@ import { useState } from "react";
 import { LogIn, UserPlus, ShoppingCart, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
+import { Navigate } from "react-router";
+import { HomePage } from "./HomePage";
 
 type Tab = "login" | "signup";
 
@@ -35,7 +37,24 @@ export function LoginPage() {
       return;
     }
 
+      // Fetch profile from Supabase and save to localStorage
+    const { data } = await supabase
+      .from("customers")
+      .select("*")
+      .eq("email", loginEmail)
+      .single();
+
+    if (data) {
+      localStorage.setItem("cookie-shop-user", JSON.stringify({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+      }));
+    }
+
     toast.success("Signed in — welcome back! 🍪");
+    return <Navigate to="/" />;
   };
 
   const handleSignup = async () => {
