@@ -3,7 +3,12 @@ import { MenuItem } from "../../types";
 import { toast } from "sonner";
 import { Cookie, Plus } from "lucide-react";
 
-const menuCookies: MenuItem[] = [
+const tripleChocolateImage = new URL("./img/tripleChocolate_cookie.png", import.meta.url).href;
+const marshmallowImage = new URL("./img/mashmelloe_cookie.png", import.meta.url).href;
+
+type MenuItemWithImage = MenuItem & { image?: string };
+
+const menuCookies: MenuItemWithImage[] = [
   {
     id: "triple-chocolate",
     name: "Triple Chocolate",
@@ -11,6 +16,7 @@ const menuCookies: MenuItem[] = [
     price: 35,
     texture: "soft",
     flavors: ["chocolate"],
+    image: tripleChocolateImage,
   },
   {
     id: "marshmallow",
@@ -19,6 +25,7 @@ const menuCookies: MenuItem[] = [
     price: 35,
     texture: "soft",
     flavors: ["vanilla", "marshmallow"],
+    image: marshmallowImage,
   },
 ];
 
@@ -43,8 +50,16 @@ export function HomePage() {
             key={cookie.id}
             className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <div className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center">
-              <Cookie className="w-24 h-24 text-amber-600" />
+            <div className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center overflow-hidden">
+              {cookie.image ? (
+                <img
+                  src={cookie.image}
+                  alt={cookie.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Cookie className="w-12 h-12 text-amber-600" /> //กันไว้ก่อนเผื่อไม่มีรูป
+              )}
             </div>
             <div className="p-6">
               <h3 className="text-xl mb-2">{cookie.name}</h3>
