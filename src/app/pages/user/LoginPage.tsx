@@ -161,7 +161,7 @@ export function LoginPage() {
               </Field>
 
               <div style={{ textAlign: "right", marginTop: "-6px", marginBottom: "12px" }}>
-                <a href="#" style={{ fontSize: "12px", color: "#E07B1A", textDecoration: "none" }}>
+                <a href="/forgot-password" className="text-[12px] text-[#E07B1A] no-underline hover:underline" >
                   Forgot password?
                 </a>
               </div>

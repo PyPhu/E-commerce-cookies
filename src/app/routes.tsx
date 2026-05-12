@@ -12,6 +12,7 @@ import { SuccessPage } from "./pages/user/SuccessPage";
 import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 import { CancelPage } from "./pages/user/CancelPage";
 import { LoginPage } from "./pages/user/LoginPage";
+import { ForgotPasswordPage } from "./pages/user/Register/ForgetpassPage";
 
 export const router = createBrowserRouter([
   {
@@ -20,7 +21,6 @@ export const router = createBrowserRouter([
     children: [
       // User
       { index: true, element: <HomePage /> },
-      { path: 'login', element: <LoginPage /> },
       { path: 'custom-cookie', element: <CustomCookiePage /> },
       { path: 'cart', element: <CartPage /> },
       { path: 'checkout', element: <CheckoutPage /> },
@@ -30,6 +30,8 @@ export const router = createBrowserRouter([
       { path: "cancel", element: <CancelPage /> }
     ],
   },
+  { path: 'login', element: <LoginPage /> },
+  { path: "forgot-password", element: <ForgotPasswordPage /> },
   //admin
   {
     path: '/admin',
