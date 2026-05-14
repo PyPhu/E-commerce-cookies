@@ -44,6 +44,7 @@ export function LoginPage() {
       .select("*")
       .eq("email", loginEmail)
       .single();
+      console.log("Fetched user profile:", data);
 
     if (data) {
       localStorage.setItem("cookie-shop-user", JSON.stringify({

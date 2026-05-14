@@ -33,46 +33,90 @@ export function CheckoutPage() {
     };
   });
 
-  const handleCheckout = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+const handleCheckout = async (e?: React.FormEvent) => {
+  if (e) e.preventDefault();
 
-    // 1. Validation
-    if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
-      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+  if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
+    toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+    return;
+  }
+
+  localStorage.setItem('cookie-shop-user', JSON.stringify(userInfo));
+
+  try {
+    // 1. Get customer_id from customers table
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', userInfo.email)
+      .single();
+
+    if (customerError || !customer) {
+      toast.error("ไม่พบข้อมูลลูกค้า กรุณาบันทึกโปรไฟล์ก่อน");
+      navigate("/profile");
       return;
     }
 
-    // 2. Save info for next time
-    localStorage.setItem('cookie-shop-user', JSON.stringify(userInfo));
+    // 2. Create order → get order id
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        customer_id: customer.id,   // 🔑 FK to customers
+        status: 'pending',
+        total: totalPrice,
+      })
+      .select('id')
+      .single();
 
-    try {
-      // 3. Call Backend to create Stripe Session
-      const res = await fetch("http://localhost:3000/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ cart }),
-      });
-
-      const data = await res.json();
-
-      if (data.url) {
-        // 4. Redirect ไปยังหน้าชำระเงินของ Stripe (ซึ่งจะมี PromptPay QR ขึ้นมา)
-        window.location.href = data.url;
-      } else {
-        toast.error("เกิดข้อผิดพลาดในการสร้างรายการชำระเงิน");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+    if (orderError || !order) {
+      toast.error("เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ");
+      return;
     }
-  };
 
-  if (cart.length === 0) {
-    navigate("/cart");
-    return null;
+    // 3. Transfer cart → order_items using order.id as FK
+    const orderItems = cart.map((item) => ({
+      order_id: order.id,           // 🔑 FK to orders
+      cookie_type: item.name,
+      flavor: item.flavors?.[0] ?? null,
+      toppings: item.flavors ?? [],
+      quantity: item.quantity,
+    }));
+
+    const { error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems);
+
+    if (itemsError) {
+      toast.error("เกิดข้อผิดพลาดในการบันทึกรายการสินค้า");
+      return;
+    }
+
+    // 4. Clear cart from Supabase
+    await supabase
+      .from('cart_items')
+      .delete()
+      .eq('user_id', customer.id);
+
+    // 5. Redirect to Stripe (pass order_id for tracking)
+    const res = await fetch("http://localhost:3000/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart, orderId: order.id }),  // send orderId to backend
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      toast.error("เกิดข้อผิดพลาดในการสร้างรายการชำระเงิน");
+    }
+
+  } catch (error) {
+    console.error(error);
+    toast.error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
   }
+};
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">

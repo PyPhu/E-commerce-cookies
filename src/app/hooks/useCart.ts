@@ -3,6 +3,25 @@ import { CartItem, MenuItem } from '../types';
 import { supabase } from "../../../backend/supabaseClient";
 
 const CART_STORAGE_KEY = 'cookie-shop-cart';
+const USER_STORAGE_KEY = 'cookie-shop-user';
+
+// ✅ Helper: get customer ID from customers table by email
+async function getCustomerId(): Promise<string | null> {
+  const stored = localStorage.getItem(USER_STORAGE_KEY);
+  if (!stored) return null;
+
+  const { email } = JSON.parse(stored);
+  if (!email) return null;
+
+  const { data, error } = await supabase
+    .from('customers')
+    .select('id')
+    .eq('email', email)
+    .single();
+
+  if (error || !data) return null;
+  return data.id;
+}
 
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -14,8 +33,6 @@ export function useCart() {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
 
-  // ใช้ useCallback เพื่อให้ฟังก์ชันไม่ถูกสร้างใหม่ทุกครั้งที่ re-render
-  // ป้องกัน infinite loop ใน CartPage
   const syncSetCart = useCallback((newCart: CartItem[]) => {
     setCart(newCart);
   }, []);
@@ -23,7 +40,6 @@ export function useCart() {
   const addToCart = async (item: MenuItem) => {
     let latestQuantity = 1;
 
-    // 1. Update Local State และหา Quantity ล่าสุดไปพร้อมกัน
     setCart(prevCart => {
       const existingItem = prevCart.find(i => i.id === item.id);
       if (existingItem) {
@@ -35,33 +51,34 @@ export function useCart() {
       return [...prevCart, { ...item, quantity: 1 }];
     });
 
-    // 2. Sync กับ Supabase
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+    // ✅ Use customer_id instead of user_id
+    const customerId = await getCustomerId();
+    if (customerId) {
       const { error } = await supabase
         .from('cart_items')
         .upsert({
-          user_id: user.id,
+          customer_id: customerId,  // 🔑 Foreign key to customers
           product_id: item.id,
           name: item.name,
           price: item.price,
-          quantity: latestQuantity, 
+          quantity: latestQuantity,
           texture: item.texture,
           flavors: item.flavors
-        }, { onConflict: 'user_id, product_id' });
-      
+        }, { onConflict: 'customer_id, product_id' });
+
       if (error) console.error("Error syncing to DB:", error.message);
     }
   };
 
   const removeFromCart = async (itemId: string) => {
     setCart(prevCart => prevCart.filter(item => item.id !== itemId));
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+
+    const customerId = await getCustomerId();
+    if (customerId) {
       await supabase
         .from('cart_items')
         .delete()
-        .eq('user_id', user.id)
+        .eq('customer_id', customerId)
         .eq('product_id', itemId);
     }
   };
@@ -76,21 +93,26 @@ export function useCart() {
         item.id === itemId ? { ...item, quantity } : item
       )
     );
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
+
+    const customerId = await getCustomerId();
+    if (customerId) {
       await supabase
         .from('cart_items')
         .update({ quantity })
-        .eq('user_id', user.id)
+        .eq('customer_id', customerId)
         .eq('product_id', itemId);
     }
   };
 
   const clearCart = async () => {
     setCart([]);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('cart_items').delete().eq('user_id', user.id);
+
+    const customerId = await getCustomerId();
+    if (customerId) {
+      await supabase
+        .from('cart_items')
+        .delete()
+        .eq('customer_id', customerId);
     }
   };
 
@@ -99,7 +121,7 @@ export function useCart() {
 
   return {
     cart,
-    setCart: syncSetCart, // ใช้ฟังก์ชันที่ผ่าน useCallback แล้ว
+    setCart: syncSetCart,
     addToCart,
     removeFromCart,
     updateQuantity,
