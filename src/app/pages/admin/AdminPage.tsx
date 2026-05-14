@@ -230,7 +230,8 @@ export function AdminPage() {
       ) : (
         /* --- Tables Component --- */
         <div className="animate-in slide-in-from-bottom-4 duration-500">
-          <AdminTables /> 
+          <AdminTables orders={orders || []}
+          cookieSummary={cookieTypeData} />
         </div>
       )}
     </div>

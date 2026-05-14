@@ -43,7 +43,6 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <AdminPage /> },
-      { path: 'tables', element: <AdminTables /> }
     ]
   }
 ]);
