@@ -17,7 +17,7 @@ export function AdminLayout() {
 
             {/* Admin Links */}
             <nav className="flex gap-4">
-              <Link to="/admin" className="hover:bg-slate-800 px-3 py-2 rounded text-sm">Dashboard</Link>
+              <Link to="/admin/tables" className="hover:bg-slate-800 px-3 py-2 rounded text-sm">Data Tables</Link>
             </nav>
           </div>
 

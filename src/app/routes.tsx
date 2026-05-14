@@ -13,6 +13,7 @@ import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 import { CancelPage } from "./pages/user/CancelPage";
 import { LoginPage } from "./pages/user/LoginPage";
 import { ForgotPasswordPage } from "./pages/user/Register/ForgetpassPage";
+import { AdminTables } from "./pages/admin/TableAdminPage";
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <AdminPage /> },
+      { path: 'tables', element: <AdminTables /> }
     ]
   }
 ]);
