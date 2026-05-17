@@ -9,25 +9,25 @@ export function CartPage() {
   const { cart, updateQuantity, removeFromCart, totalPrice, totalItems, setCart } = useCart();
 
   useEffect(() => {
-  const loadCartData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const loadCartData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from("cart_items")
-      .select("*")
-      .eq('user_id', user.id);
+      const { data, error } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq('user_id', user.id);
 
-    if (data && data.length > 0) {
-      const formattedCart = data.map((item: any) => ({
-        ...item,
-        id: item.product_id, // Map product_id กลับมาเป็น id ให้ตรงกับ Interface ของเรา
-      }));
-      setCart(formattedCart);
-    }
-  };
-  loadCartData();
-}, [setCart]);
+      if (data && data.length > 0) {
+        const formattedCart = data.map((item: any) => ({
+          ...item,
+          id: item.product_id, // Map product_id กลับมาเป็น id ให้ตรงกับ Interface ของเรา
+        }));
+        setCart(formattedCart);
+      }
+    };
+    loadCartData();
+  }, [setCart]);
 
   if (cart.length === 0) {
     return (
@@ -49,19 +49,19 @@ export function CartPage() {
 
   //pull data from supabase and display it in the cart page
   // 1. ฟังก์ชันดึงข้อมูล (ดึง userId ภายในฟังก์ชัน)
-const fetchCart = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) return [];
+  const fetchCart = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
-    .from("cart_items")
-    .select("*")
-    .eq('user_id', user.id);
+    if (!user) return [];
 
-  if (error) throw error;
-  return data;
-};
+    const { data, error } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+    return data;
+  };
 
 
   return (
@@ -98,7 +98,7 @@ const fetchCart = async () => {
             </div>
 
             <div className="w-24 text-right">
-              <span className="text-lg">${(item.price * item.quantity).toFixed(2)}</span>
+              <span className="text-lg">฿{(item.price * item.quantity).toFixed(2)}</span>
             </div>
 
             <button
@@ -118,7 +118,7 @@ const fetchCart = async () => {
           </div>
           <div className="text-right">
             <p className="text-gray-600 text-sm mb-1">Total</p>
-            <p className="text-3xl text-amber-600">${totalPrice.toFixed(2)}</p>
+            <p className="text-3xl text-amber-600">฿{totalPrice.toFixed(2)}</p>
           </div>
         </div>
         <button

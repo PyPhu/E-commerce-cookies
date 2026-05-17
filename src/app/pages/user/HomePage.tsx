@@ -67,7 +67,7 @@ export function HomePage() {
                 {cookie.texture} • {cookie.flavors?.join(", ")}
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-2xl text-amber-600">${cookie.price.toFixed(2)}</span>
+                <span className="text-2xl text-amber-600">฿{cookie.price.toFixed(2)}</span>
                 <button
                   onClick={() => handleAddToCart(cookie)}
                   className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 flex items-center gap-2"
