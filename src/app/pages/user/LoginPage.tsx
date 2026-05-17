@@ -38,13 +38,13 @@ export function LoginPage() {
       return;
     }
 
-      // Fetch profile from Supabase and save to localStorage
+    // Fetch profile from Supabase and save to localStorage
     const { data } = await supabase
       .from("customers")
       .select("*")
       .eq("email", loginEmail)
       .single();
-      console.log("Fetched user profile:", data);
+    console.log("Fetched user profile:", data);
 
     if (data) {
       localStorage.setItem("cookie-shop-user", JSON.stringify({
@@ -68,7 +68,7 @@ export function LoginPage() {
       return;
     }
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPassword,
     });
@@ -82,6 +82,7 @@ export function LoginPage() {
       .from("customers")
       .upsert(
         {
+          id: authData.user?.id, // ใช้ user ID จาก Supabase
           name: signupName,
           email: signupEmail,
           phone: signupPhone,
