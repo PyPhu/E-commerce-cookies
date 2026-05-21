@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { UserInfo, Order } from "../../types";
-import { User, Package, MapPin, Mail, Phone, Edit2, Save, X } from "lucide-react";
+import { User, Package, MapPin, Mail, Phone, Edit2, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";
 
 const USER_STORAGE_KEY = 'cookie-shop-user';
-const ORDERS_STORAGE_KEY = 'cookie-shop-user-orders';
 
 export function UserProfilePage() {
   const navigate = useNavigate();
@@ -14,7 +13,7 @@ export function UserProfilePage() {
   const handleClick = () => {
     navigate("/login");
   };
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
     const stored = localStorage.getItem(USER_STORAGE_KEY);
@@ -26,15 +25,82 @@ export function UserProfilePage() {
     };
   });
   const [editedInfo, setEditedInfo] = useState<UserInfo>(userInfo);
-  const [userOrders, setUserOrders] = useState<Order[]>(() => {
-    const stored = localStorage.getItem(ORDERS_STORAGE_KEY);
-    return stored ? JSON.parse(stored).map((order: any) => ({
-      ...order,
-      createdAt: new Date(order.createdAt)
-    })) : [];
-  });
+
+  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
 
   const hasProfile = userInfo.name && userInfo.email;
+
+  useEffect(() => {
+    async function fetchOrderHistory() {
+      if (!userInfo.email) return;
+
+      setIsLoadingOrders(true); // เปิดเอฟเฟกต์หมุน ๆ โหลดข้อมูล
+
+      try {
+        // pull id from email
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('email', userInfo.email)
+          .single();
+
+        if (customerError || !customerData) {
+          setIsLoadingOrders(false);
+          return;
+        }
+
+        const customerId = customerData.id;
+
+        // pull order 
+        const { data: ordersData, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, created_at, status')
+          .eq('customer_id', customerId)
+          .order('created_at', { ascending: false });
+
+        if (ordersError) throw ordersError;
+
+        // ถ้าลูกค้าคนนี้ยังไม่เคยสั่งซื้ออะไรเลย ให้หยุดทำงานตรงนี้
+        if (!ordersData || ordersData.length === 0) {
+          setUserOrders([]);
+          setIsLoadingOrders(false);
+          return;
+        }
+
+        // รวบรวม Order ID ทั้งหมดออกมาเป็นอาเรย์ เช่น [10, 11, 12] เพื่อไปหาของต่อ
+        const orderIds = ordersData.map(order => order.id);
+
+        // pull order_items 
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('order_items')
+          .select('id, order_id, texture, flavor, toppings, quantity')
+          .in('order_id', orderIds); // ค้นหาไอเทมทั้งหมดที่อยู่ในรายการออเดอร์ชุดนี้
+
+        if (itemsError) throw itemsError;
+
+        // combine order and order_items 
+        const combinedOrders = ordersData.map(order => {
+          return {
+            ...order,
+            // select a match id
+            order_items: itemsData ? itemsData.filter(item => item.order_id === order.id) : []
+          };
+        });
+
+        setUserOrders(combinedOrders);
+
+      } catch (err: any) {
+        console.error("Error fetching orders manually:", err);
+        toast.error("Could not load order history");
+      } finally {
+        setIsLoadingOrders(false); 
+      }
+    }
+
+    fetchOrderHistory();
+  }, [userInfo.email]); 
+
 
   const handleSave = async () => {
     if (!editedInfo.name || !editedInfo.email || !editedInfo.address || !editedInfo.phone) {
@@ -42,19 +108,19 @@ export function UserProfilePage() {
       return;
     }
 
-  const { error } = await supabase
-    .from('customers')
-    .upsert({
-      name: editedInfo.name,
-      email: editedInfo.email,
-      phone: editedInfo.phone,
-      address: editedInfo.address,
-    }, { onConflict: 'email' }); // updates if email already exists
+    const { error } = await supabase
+      .from('customers')
+      .upsert({
+        name: editedInfo.name,
+        email: editedInfo.email,
+        phone: editedInfo.phone,
+        address: editedInfo.address,
+      }, { onConflict: 'email' });
 
-  if (error) {
-    toast.error("Failed to save profile: " + error.message);
-    return;
-  }
+    if (error) {
+      toast.error("Failed to save profile: " + error.message);
+      return;
+    }
 
     setUserInfo(editedInfo);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(editedInfo));
@@ -68,13 +134,12 @@ export function UserProfilePage() {
   };
 
 
-
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
       <h1 className="text-4xl mb-8">My Profile</h1>
 
       <div className="grid md:grid-cols-3 gap-8">
+        {/*(Personal Info)*/}
         <div className="md:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-6">
@@ -203,57 +268,77 @@ export function UserProfilePage() {
           </div>
         </div>
 
+        {/*(Order History)*/}
         <div className="md:col-span-2">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl mb-6">Order History</h2>
 
-            {userOrders.length === 0 ? (
+            {/* load data from Supabase */}
+            {isLoadingOrders ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500 gap-2">
+                <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                <p>Loading your orders...</p>
+              </div>
+            ) : userOrders.length === 0 ? (
+              /* no order found */
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-600 mb-2">No orders yet</p>
                 <p className="text-sm text-gray-500">Your order history will appear here</p>
               </div>
             ) : (
+              /* has order then loop order's card */
               <div className="space-y-4">
                 {userOrders.map((order) => (
                   <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:border-amber-300 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="text-sm text-gray-600">Order ID: {order.id}</p>
-                        <p className="text-sm text-gray-600">
-                          {order.createdAt.toLocaleDateString()} at {order.createdAt.toLocaleTimeString()}
+                        {/* order.id from orders */}
+                        <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p>
+                        <p className="text-sm text-gray-500">
+                          {/* นำเวลา timestamptz (created_at) มาแปลงให้เป็นภาษาอ่านง่าย */}
+                          {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
                         </p>
                       </div>
+                      <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p> 
                       <span
-                        className={`px-3 py-1 rounded-full text-sm capitalize ${
-                          order.status === "completed"
+                        className={`px-3 py-1 rounded-full text-sm capitalize font-bold ${ 
+                          order.status === "shipped"
                             ? "bg-green-100 text-green-700"
-                            : order.status === "ready"
-                            ? "bg-blue-100 text-blue-700"
-                            : order.status === "preparing"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+                            : order.status === "prepare"
+                              ? "bg-blue-100 text-blue-700"
+                              : order.status === "paid"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-gray-100 text-gray-700" /* 👈 จะเข้าเงื่อนไขสีเทานี้อัตโนมัติเมื่อสถานะเป็น "pending" */
+                          }`}
                       >
                         {order.status}
                       </span>
                     </div>
 
-                    <div className="space-y-2 mb-3">
-                      {order.items.map((item, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span>
-                            {item.quantity}x {item.name}
-                          </span>
-                          <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    {/* รายการคุกกี้ในออเดอร์ (ดึงจาก order_items ที่เราฟิลเตอร์ไว้) */}
+                    <div className="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg">
+                      {order.order_items && order.order_items.map((item: any, index: number) => (
+                        <div key={index} className="text-sm flex flex-col border-b border-gray-100 last:border-0 pb-2 last:pb-0">
+                          <div className="flex justify-between text-gray-800">
+                            <span className="font-semibold text-amber-800">
+                              {item.quantity}x Custom Cookie ({item.flavor || "Original"})
+                            </span>
+                          </div>
+
+                          {/* โชว์รายละเอียด (item.flavor) */}
+                          {(item.texture || item.flavor || item.toppings) && (
+                            <div className="text-xs text-gray-500 mt-1 pl-3 space-y-0.5">
+                              {item.texture && <p>• Texture: {item.texture}</p>}
+                              {item.toppings && (
+                                <p>• Toppings: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
 
-                    <div className="border-t pt-3 flex justify-between">
-                      <span>Total</span>
-                      <span className="text-amber-600">${order.total.toFixed(2)}</span>
-                    </div>
                   </div>
                 ))}
               </div>
