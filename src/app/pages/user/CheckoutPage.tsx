@@ -37,7 +37,7 @@ const handleCheckout = async (e?: React.FormEvent) => {
   if (e) e.preventDefault();
 
   if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
-    toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+    toast.error("Please fill in all required fields");
     return;
   }
 
@@ -46,74 +46,14 @@ const handleCheckout = async (e?: React.FormEvent) => {
 
   localStorage.setItem('cookie-shop-user', JSON.stringify(userInfo));
 
-  try {
-    // 1. Get customer_id from customers table
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('email', userInfo.email)
-      .single();
-
-    // ดูผลลัพธ์หลังจากไปหาในฐานข้อมูลมาแล้ว
-    console.log("2. ผลลัพธ์ข้อมูลลูกค้าจากคลาวด์:", customer, "Error คือ:", customerError);
-
-    if (customerError || !customer) {
-      toast.error("ไม่พบข้อมูลลูกค้า กรุณาบันทึกโปรไฟล์ก่อน");
-      navigate("/profile");
-      return;
-    }
-
-    // 2. Create order → get order id
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        customer_id: customer.id,   // 🔑 FK to customers
-        status: 'pending',
-      })
-      .select('id')
-      .single();
-
-    // ดูว่าบิลหลักสร้างผ่านไหม ได้ ID อะไรกลับมา
-    console.log("3. สร้าง Order แม่สำเร็จไหม ได้ไอดีอะไร:", order, "Error คือ:", orderError);
-
-    if (orderError || !order) {
-      toast.error("เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ");
-      return;
-    }
-
-    // 3. Transfer cart → order_items using order.id as FK
-    const orderItems = cart.map((item) => ({
-      order_id: order.id,           // 🔑 FK to orders
-      cookie_type: item.name,
-      flavor: item.flavors?.[0] ?? null,
-      toppings: item.flavors ?? [],
-      quantity: item.quantity,
-    }));
-
-    // ดูว่าของในตะกร้าหน้าตาพร้อมส่งเข้า order_items ไหม (และอาร์เรย์ว่างเปล่ารึเปล่า)
-    console.log("4. ข้อมูลสินค้าในตะกร้าที่จะส่งเข้า order_items:", orderItems);
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      console.error("เกิดข้อผิดพลาดที่ order_items:", itemsError.message);
-      toast.error("เกิดข้อผิดพลาดในการบันทึกรายการสินค้า");
-      return;
-    }
-
-    // 4. Clear cart from Supabase
-    await supabase
-      .from('cart_items')
-      .delete()
-      .eq('customer_id', customer.id);
-
-    // 5. Redirect to Stripe (pass order_id for tracking)
+  try{
     const res = await fetch("http://localhost:3000/create-checkout-session", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cart, orderId: order.id }),  // send orderId to backend
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({
+        cart,
+        userInfo
+      }),
     });
 
     const data = await res.json();
@@ -121,12 +61,11 @@ const handleCheckout = async (e?: React.FormEvent) => {
     if (data.url) {
       window.location.href = data.url;
     } else {
-      toast.error("เกิดข้อผิดพลาดในการสร้างรายการชำระเงิน");
+      toast.error("Failed to create checkout session");
     }
-
   } catch (error) {
-    console.error("Catch Error:", error);
-    toast.error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+    console.error("catch error:", error);
+    toast.error("can't connect to server");
   }
 };
 
