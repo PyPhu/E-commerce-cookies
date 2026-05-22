@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { UserInfo, Order } from "../../types";
-import { User, Package, MapPin, Mail, Phone, Edit2, Save, X, Loader2 } from "lucide-react";
+import { User, Package, MapPin, Mail, Phone, Edit2, Save, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";
@@ -9,6 +9,10 @@ const USER_STORAGE_KEY = 'cookie-shop-user';
 
 export function UserProfilePage() {
   const navigate = useNavigate();
+
+  const ITEM_PAGE = 5;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0); // เก็บจำนวนออเดอร์ทั้งหมดที่ดึงได้จากเบส
 
   const handleClick = () => {
     navigate("/login");
@@ -52,14 +56,16 @@ export function UserProfilePage() {
 
         const customerId = customerData.id;
 
-        // pull order 
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('id, created_at, status')
-          .eq('customer_id', customerId)
-          .order('created_at', { ascending: false });
+        const from = (currentPage - 1) * ITEM_PAGE;
+        const to = from + ITEM_PAGE - 1;
 
-        if (ordersError) throw ordersError;
+        // pull order 
+        const { data: ordersData, error: ordersError, count } = await supabase
+          .from('orders')
+          .select('id, created_at, status', { count: 'exact' }) // ขอ count มาด้วยเลย
+          .eq('customer_id', customerId)
+          .order('created_at', { ascending: false })
+          .range(from, to);
 
         // ถ้าลูกค้าคนนี้ยังไม่เคยสั่งซื้ออะไรเลย ให้หยุดทำงานตรงนี้
         if (!ordersData || ordersData.length === 0) {
@@ -67,6 +73,12 @@ export function UserProfilePage() {
           setIsLoadingOrders(false);
           return;
         }
+
+        if (count !== null) {
+          setTotalOrders(count);
+        }
+
+        if (ordersError) throw ordersError;
 
         // รวบรวม Order ID ทั้งหมดออกมาเป็นอาเรย์ เช่น [10, 11, 12] เพื่อไปหาของต่อ
         const orderIds = ordersData.map(order => order.id);
@@ -94,13 +106,14 @@ export function UserProfilePage() {
         console.error("Error fetching orders manually:", err);
         toast.error("Could not load order history");
       } finally {
-        setIsLoadingOrders(false); 
+        setIsLoadingOrders(false);
       }
     }
 
     fetchOrderHistory();
-  }, [userInfo.email]); 
+  }, [userInfo.email, currentPage]);
 
+  const totalPages = Math.ceil(totalOrders / ITEM_PAGE);
 
   const handleSave = async () => {
     if (!editedInfo.name || !editedInfo.email || !editedInfo.address || !editedInfo.phone) {
@@ -266,7 +279,36 @@ export function UserProfilePage() {
               </div>
             )}
           </div>
+          {/* Developer Profile*/}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6"> {/* mt-6 ช่วยดันระยะห่างจากกล่องบน */}
+            <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-3">
+              {/* ตกแต่งด้วยไอคอนเก๋ ๆ ไอคอน User หรือ Code ก็ได้ */}
+              <div className="bg-amber-100 p-2 rounded-lg text-amber-700">
+                <User className="w-5 h-5" /> 
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">Developer Profile</h3>
+                <p className="text-xs text-gray-500">System Creator</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-700">
+              <p className="flex justify-between">
+                <span className="text-gray-500">Developed by:</span>
+                <span className="font-semibold text-gray-900">Your Name / Team Name</span> {/* 👈 เปลี่ยนชื่อคุณตรงนี้ */}
+              </p>
+              <p className="flex justify-between">
+                <span className="text-gray-500">Role:</span>
+                <span className="text-amber-700 font-medium">Full-Stack Developer</span>
+              </p>
+              <p className="text-xs text-gray-400 border-t border-gray-50 pt-2 mt-2 text-center">
+                © {new Date().getFullYear()} Cookie Shop Project. All rights reserved.
+              </p>
+            </div>
+          </div>
         </div>
+
+        
 
         {/*(Order History)*/}
         <div className="md:col-span-2">
@@ -300,10 +342,9 @@ export function UserProfilePage() {
                           {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
                         </p>
                       </div>
-                      <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p> 
+                      <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm capitalize font-bold ${ 
-                          order.status === "shipped"
+                        className={`px-3 py-1 rounded-full text-sm capitalize font-bold ${order.status === "shipped"
                             ? "bg-green-100 text-green-700"
                             : order.status === "prepare"
                               ? "bg-blue-100 text-blue-700"
@@ -341,6 +382,33 @@ export function UserProfilePage() {
 
                   </div>
                 ))}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-6">
+                    <p className="text-sm text-gray-600">
+                      Showing page <span className="font-semibold">{currentPage}</span> of{" "}
+                      <span className="font-semibold">{totalPages}</span>
+                    </p>
+                    <div className="flex gap-2">
+                      {/* ปุ่มย้อนกลับ: จะกดไม่ได้ (disabled) ถ้าอยู่หน้า 1 */}
+                      <button
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 border rounded-lg disabled:opacity-50"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+
+                      {/* ปุ่มไปข้างหน้า: จะกดไม่ได้ถ้าอยู่หน้าสุดท้าย */}
+                      <button
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 border rounded-lg disabled:opacity-50"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
