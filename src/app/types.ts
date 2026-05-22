@@ -5,6 +5,7 @@ export interface MenuItem {
   price: number;
   texture?: 'hard' | 'soft';
   flavors?: string[];
+  toppings?: string[];
 }
 
 export interface CartItem extends MenuItem {

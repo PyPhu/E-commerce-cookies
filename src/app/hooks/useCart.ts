@@ -63,7 +63,8 @@ export function useCart() {
           price: item.price,
           quantity: latestQuantity,
           texture: item.texture,
-          flavors: item.flavors
+          flavors: item.flavors,
+          toppings: (item as any).toppings
         }, { onConflict: 'customer_id, product_id' });
 
       if (error) console.error("Error syncing to DB:", error.message);
