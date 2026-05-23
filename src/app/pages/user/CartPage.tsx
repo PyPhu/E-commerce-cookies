@@ -63,7 +63,6 @@ export function CartPage() {
     return data;
   };
 
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-4xl mb-8">Shopping Cart</h1>

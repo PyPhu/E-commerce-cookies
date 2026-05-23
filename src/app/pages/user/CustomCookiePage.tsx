@@ -63,7 +63,7 @@ export function CustomCookiePage() {
       }
     }
     
-    fetchIngredients(); // 👈 ย้ายมาสั่งรันให้ถูกตำแหน่งตรงนี้
+    fetchIngredients(); 
   }, []);
 
   // 🌟 เพิ่ม async ตรงนี้เพื่อให้ใช้คำสั่งร่วมกับฐานข้อมูลได้
@@ -87,19 +87,18 @@ export function CustomCookiePage() {
 
       if (menuError) throw menuError;
 
-      // ปั้นก้อนข้อมูลสินค้า (ใช้ "as any" หลบภัยในกรณีที่ไฟล์ types ยังไม่ได้อัปเดตฟิลด์)
       const customCookie = {
         id: `custom-${menuData.id}`, 
         name: `Custom Cookie (${selectedFlavors.join(", ")})`,
         type: "custom",
-        price: 4.99,
-        texture,
+        price: 30,
+        texture: texture,
         flavors: selectedFlavors,
         toppings: selectedToppings,
       };
 
-      // บันทึกลงตะกร้าฝั่ง Client
-      addToCart(customCookie as any);
+      // save cart into cart_items table in supabase
+      await addToCart(customCookie as any);
       
       toast.success("Saved recipe and added to cart!");
       
