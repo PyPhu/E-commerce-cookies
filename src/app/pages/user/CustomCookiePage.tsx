@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useCart } from "../../hooks/useCart";
-import { MenuItem } from "../../types";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { supabase } from "../../../../backend/supabaseClient";
@@ -13,17 +12,12 @@ export function CustomCookiePage() {
   const [dbFlavors, setDbFlavors] = useState<string[]>([]);
   const [dbToppings, setDbToppings] = useState<string[]>([]);
 
-  // เปลี่ยนเป็น string ทั่วไปเพื่อให้รับค่าจากฐานข้อมูลได้โดยไม่ติด Type Error
   const [texture, setTexture] = useState<string>("");
-  const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
+  const [selectedFlavor, setSelectedFlavor] = useState<string>("");
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
 
-  const toggleFlavor = (flavor: string) => {
-    setSelectedFlavors((prev) =>
-      prev.includes(flavor)
-        ? prev.filter((f) => f !== flavor)
-        : [...prev, flavor]
-    );
+  const handleSelectFlavor = (flavor: string) => {
+    setSelectedFlavor(flavor);
   };
 
   const toggleTopping = (topping: string) => {
@@ -46,7 +40,6 @@ export function CustomCookiePage() {
         if (texturesRes.data) {
           const textureType = texturesRes.data.map((t: any) => t.type);
           setDbTextures(textureType);
-
           if (textureType.length > 0) setTexture(textureType[0]);
         } 
 
@@ -66,20 +59,20 @@ export function CustomCookiePage() {
     fetchIngredients(); 
   }, []);
 
-  // 🌟 เพิ่ม async ตรงนี้เพื่อให้ใช้คำสั่งร่วมกับฐานข้อมูลได้
   const handleAddToCart = async () => {
-    if (selectedFlavors.length === 0) {
-      toast.error("Please select at least one flavor!");
+    // ⚠️ ตรวจสอบค่ารสชาติเดี่ยวแทนอาเรย์เดิม
+    if (!selectedFlavor) {
+      toast.error("Please select a flavor!");
       return;
     }
 
     try {
-      // 🌟 ใส่ await เพื่อรอให้ฐานข้อมูลบันทึกสูตรและคืนค่า ID กลับมา
+      // save custom_menu
       const { data: menuData, error: menuError } = await supabase
         .from('custom_menu')
         .insert({
           texture: [texture],
-          flavors: selectedFlavors,
+          flavors: [selectedFlavor], 
           toppings: selectedToppings
         })
         .select('id')
@@ -89,21 +82,19 @@ export function CustomCookiePage() {
 
       const customCookie = {
         id: `custom-${menuData.id}`, 
-        name: `Custom Cookie (${selectedFlavors.join(", ")})`,
+        name: `Custom Cookie Combo Set (${selectedFlavor})`,
         type: "custom",
-        price: 30,
+        price: 399, 
         texture: texture,
-        flavors: selectedFlavors,
-        toppings: selectedToppings,
+        flavors: [selectedFlavor], // หุ้ม Array ส่งเข้า cart_items.flavors 
+        toppings: selectedToppings, 
       };
 
-      // save cart into cart_items table in supabase
       await addToCart(customCookie as any);
       
       toast.success("Saved recipe and added to cart!");
       
-      // ล้างฟอร์มเคลียร์ค่าว่าง
-      setSelectedFlavors([]);
+      setSelectedFlavor("");
       setSelectedToppings([]);
       
       navigate("/cart");
@@ -117,21 +108,34 @@ export function CustomCookiePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl mb-4">Build Your Custom Cookie</h1>
-        <p className="text-gray-600">Choose your texture and flavors</p>
+        <h1 className="text-4xl mb-4 font-bold">Build Your Custom Cookie</h1>
+        <p className="text-gray-600">Choose your favorite texture, flavor, and toppings</p>
+      </div>
+
+      {/* tell you will get 10 cookies */}
+      <div className="bg-amber-50 border-l-4 border-amber-600 p-5 rounded-r-lg mb-8 shadow-sm">
+        <div className="flex gap-3 items-center">
+          <span className="text-2xl">📦</span>
+          <div>
+            <h4 className="text-amber-800 font-bold text-lg">Custom Combo Set Box</h4>
+            <p className="text-amber-700 text-sm">
+              we provide you with a set of 10 custom cookies!
+            </p>
+          </div>
+        </div>
       </div>
       
       <div className="bg-white rounded-lg shadow-md p-8 mb-8">
         {/* Texture Selection */}
         <div className="mb-8">
-          <h2 className="text-2xl mb-4">Texture</h2>
+          <h2 className="text-2xl mb-4 font-semibold text-gray-800">Texture</h2>
           <div className="flex gap-4">
             {dbTextures.map((t) => (
               <button
                 key={t}
                 onClick={() => setTexture(t)}
-                className={`flex-1 py-4 px-6 rounded-lg border-2 transition-all capitalize ${
-                  texture === t ? "border-amber-600 bg-amber-50 text-amber-600" : "border-gray-200"
+                className={`flex-1 py-4 px-6 rounded-lg border-2 font-medium transition-all capitalize ${
+                  texture === t ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
               >
                 {t}
@@ -142,14 +146,15 @@ export function CustomCookiePage() {
 
         {/* Flavor Selection */}
         <div className="mb-8">
-          <h2 className="text-2xl mb-4">Flavors</h2>
+          <h2 className="text-2xl mb-2 font-semibold text-gray-800">Flavor</h2>
+          <p className="text-xs text-gray-400 mb-4">please select one flavor</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {dbFlavors.map((flavor) => (
               <button
                 key={flavor}
-                onClick={() => toggleFlavor(flavor)}
-                className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${
-                  selectedFlavors.includes(flavor) ? "border-amber-600 bg-amber-50 text-amber-600" : "border-gray-200"
+                onClick={() => handleSelectFlavor(flavor)}
+                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${
+                  selectedFlavor === flavor ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
               >
                 {flavor}
@@ -160,14 +165,14 @@ export function CustomCookiePage() {
 
         {/* Topping Selection */}
         <div>
-          <h2 className="text-2xl mb-4">Toppings</h2>
+          <h2 className="text-2xl mb-4 font-semibold text-gray-800">Toppings</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {dbToppings.map((topping) => (
               <button
                 key={topping}
                 onClick={() => toggleTopping(topping)}
-                className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${
-                  selectedToppings.includes(topping) ? "border-amber-600 bg-amber-50 text-amber-600" : "border-gray-200"
+                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${
+                  selectedToppings.includes(topping) ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
               >
                 {topping}
@@ -177,24 +182,24 @@ export function CustomCookiePage() {
         </div>
       </div>
 
-      {/* กล่องสรุปราคาและปุ่มยืนยัน */}
+      {/* submit button */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl mb-1">Your Custom Cookie</h3>
+            <h3 className="text-xl font-bold text-gray-800">Your Custom Box (10 pcs)</h3>
             <p className="text-gray-600 text-sm capitalize">
-              {texture || "No texture"} • {selectedFlavors.length > 0 ? selectedFlavors.join(", ") : "No flavors selected"}
+              {texture || "No texture"} • {selectedFlavor ? `Flavor: ${selectedFlavor}` : "No flavor selected"}
               {selectedToppings.length > 0 && ` • Toppings: ${selectedToppings.join(", ")}`}
             </p>
           </div>
-          <span className="text-2xl text-amber-600 font-bold">$4.99</span>
+          <span className="text-2xl text-amber-600 font-bold">฿399.00</span>
         </div>
         <button
           onClick={handleAddToCart}
-          disabled={selectedFlavors.length === 0}
-          className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          disabled={!selectedFlavor}
+          className="w-full bg-amber-600 text-white py-3 rounded-lg font-semibold hover:bg-amber-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
-          Add to Cart
+          Add Custom Set to Cart
         </button>
       </div>
     </div>
