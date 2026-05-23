@@ -1,27 +1,14 @@
 import { useCart } from "../../hooks/useCart";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { QrCode, Mail } from "lucide-react";
-import { useState } from "react";
+import { Mail } from "lucide-react";
+import { useState, useEffect } from "react";
 import { UserInfo } from "../../types";
-import { useEffect } from "react";
 import { supabase } from "../../../../backend/supabaseClient";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { cart, totalPrice } = useCart();
-
-    // Check if user is logged in
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Please sign in to continue checkout");
-        navigate("/login");
-      }
-    };
-    checkAuth();
-  }, []);
 
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
     const stored = localStorage.getItem('cookie-shop-user');
@@ -33,41 +20,82 @@ export function CheckoutPage() {
     };
   });
 
-const handleCheckout = async (e?: React.FormEvent) => {
-  if (e) e.preventDefault();
+  // ── Check if user is logged in + pre-fill info from Supabase ──
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to continue checkout");
+        navigate("/login");
+        return;
+      }
 
-  if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
-    toast.error("Please fill in all required fields");
-    return;
-  }
+      // Pre-fill user info from customers table if exists
+      const { data: profile } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
 
-  // ดูว่าอีเมลที่ดึงมาจากหน้าเว็บถูกต้องไหม
-  console.log("1. อีเมลลูกค้าที่จะไปค้นหาคือ:", userInfo.email);
+      if (profile) {
+        const loaded: UserInfo = {
+          name: profile.name || "",
+          email: profile.email || session.user.email || "",
+          phone: profile.phone || "",
+          address: profile.address || "",
+          role: "user"
+        };
+        setUserInfo(loaded);
+      }
+    };
+    checkAuth();
+  }, []);
 
-  localStorage.setItem('cookie-shop-user', JSON.stringify(userInfo));
+  const handleCheckout = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
-  try{
-    const res = await fetch("http://localhost:3000/create-checkout-session", {
-      method: "POST",
-      headers: {"content-type": "application/json"},
-      body: JSON.stringify({
-        cart,
-        userInfo
-      }),
-    });
-
-    const data = await res.json();
-
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      toast.error("Failed to create checkout session");
+    if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
+      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      return;
     }
-  } catch (error) {
-    console.error("catch error:", error);
-    toast.error("can't connect to server");
-  }
-};
+
+    localStorage.setItem('cookie-shop-user', JSON.stringify(userInfo));
+
+    try {
+      // ✅ Get session token instead of anon key
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expired, please sign in again");
+        navigate("/login");
+        return;
+      }
+
+      const res = await fetch(
+        "https://uyfprvwjgurtvkpwkzdo.supabase.co/functions/v1/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // ✅ Use session.access_token NOT anon key
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ cart, userInfo }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Edge function error:", data);
+        toast.error("เกิดข้อผิดพลาดในการสร้างรายการชำระเงิน");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -130,16 +158,15 @@ const handleCheckout = async (e?: React.FormEvent) => {
               ชำระเงินด้วย PromptPay
             </button>
 
-            {/* สำหรับเทสการยกเลิกการชำระเงิน (ลบออกได้หลังจากทดสอบ) */}
-            // ใน CheckoutPage.tsx (ใส่ไว้ชั่วคราวเพื่อเทส)
+            {/* ลบออกหลังจากทดสอบ */}
             <button
+              type="button"
               onClick={() => window.location.href = '/cancel'}
               className="text-sm text-gray-400 underline"
             >
               Test: Simulate Cancel Payment
             </button>
           </form>
-          
         </div>
 
         {/* ฝั่งสรุปคำสั่งซื้อ */}

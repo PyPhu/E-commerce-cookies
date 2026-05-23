@@ -30,8 +30,6 @@ export function HomePage() {
           .from("cookie_images")
           .getPublicUrl(p.image_url);
 
-        console.log("image_url from db:", p.image_url);
-        console.log("built public URL:", storageData.publicUrl);
 
         return {
           id: String(p.id),
