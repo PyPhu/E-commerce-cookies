@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import { HomePage } from "./pages/user/HomePage";
 import { CustomCookiePage } from "./pages/user/CustomCookiePage";
 import { CartPage } from "./pages/user/CartPage";
@@ -13,10 +13,17 @@ import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 import { CancelPage } from "./pages/user/CancelPage";
 import { LoginPage } from "./pages/user/LoginPage";
 import { ForgotPasswordPage } from "./pages/user/Register/ForgetpassPage";
-import { AdminTables } from "./pages/admin/TableAdminPage";
+import { AuthProvider } from "./components/AdminAuth";
 
 export const router = createBrowserRouter([
   {
+    path: '/',
+    element: (
+      <AuthProvider>
+        <Outlet /> 
+      </AuthProvider>
+    ),
+    children: [{
     path: '/',
     element: <UserLayout />,
     children: [
@@ -44,5 +51,5 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminPage /> },
     ]
-  }
+  }]}
 ]);

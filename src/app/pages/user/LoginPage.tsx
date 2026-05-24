@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogIn, UserPlus, ShoppingCart, User } from "lucide-react";
+import { LogIn, UserPlus, LogOut, User } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";

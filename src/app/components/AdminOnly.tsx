@@ -1,51 +1,22 @@
-import { useState, useEffect } from "react";
 import { Navigate } from "react-router";
-import { supabase } from "../../../backend/supabaseClient";
+import { useAuth } from "./AdminAuth"; 
 
 interface AdminOnlyProps {
   children: React.ReactNode;
 }
 
 export function AdminOnly({ children }: AdminOnlyProps) {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = still loading
-  const [loading, setLoading] = useState(true);
+  const { isAdmin, loading } = useAuth();
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      // Get current logged-in user's email from localStorage
-      const stored = localStorage.getItem('cookie-shop-user');
-      if (!stored) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
+  // load state ขณะตรวจสอบสิทธิ์
+  if (loading) {
+    return <div className="text-center py-12 text-slate-600 font-medium">Checking access...</div>;
+  }
 
-      const { email } = JSON.parse(stored);
-
-      // Fetch role from Supabase
-      const { data, error } = await supabase
-        .from('customers')
-        .select('role')
-        .eq('email', email)
-        .single();
-
-      if (error || !data) {
-        setIsAdmin(false);
-      } else {
-        setIsAdmin(data.role === 'admin');
-      }
-
-      setLoading(false);
-    };
-
-    checkAdmin();
-  }, []);
-
-  // Still checking
-  if (loading) return <div className="text-center py-12">Checking access...</div>;
-
-  // Not admin → redirect
-  if (!isAdmin) return <Navigate to="/" replace />;
+  // if user is not admin, redirect to home page
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   return <>{children}</>;
 }
