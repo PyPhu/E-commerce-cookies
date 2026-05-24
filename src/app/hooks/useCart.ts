@@ -5,7 +5,6 @@ import { supabase } from "../../../backend/supabaseClient";
 const CART_STORAGE_KEY = 'cookie-shop-cart';
 const USER_STORAGE_KEY = 'cookie-shop-user';
 
-// ✅ Helper: get customer ID from customers table by email
 async function getCustomerId(): Promise<string | null> {
   const stored = localStorage.getItem(USER_STORAGE_KEY);
   if (!stored) return null;
@@ -38,36 +37,47 @@ export function useCart() {
   }, []);
 
   const addToCart = async (item: MenuItem) => {
-    let latestQuantity = 1;
+    let updatedQuantity = 1;
 
     setCart(prevCart => {
-      const existingItem = prevCart.find(i => i.id === item.id);
-      if (existingItem) {
-        latestQuantity = existingItem.quantity + 1;
-        return prevCart.map(i =>
-          i.id === item.id ? { ...i, quantity: latestQuantity } : i
-        );
+      const existingItemIndex = prevCart.findIndex(i => i.id === item.id);
+      
+      if (existingItemIndex !== -1) {
+        const existingItem = prevCart[existingItemIndex];
+        updatedQuantity = existingItem.quantity + 1;
+        
+        console.log(`📦 ${item.name}: ${existingItem.quantity} → ${updatedQuantity}`);
+        
+        const newCart = [...prevCart];
+        newCart[existingItemIndex] = { ...existingItem, quantity: updatedQuantity };
+        return newCart;
+      } else {
+        updatedQuantity = 1;
+        console.log(`✨ Adding new: ${item.name}`);
+        return [...prevCart, { ...item, quantity: 1 }];
       }
-      return [...prevCart, { ...item, quantity: 1 }];
     });
 
-    // ✅ Use customer_id instead of user_id
     const customerId = await getCustomerId();
     if (customerId) {
       const { error } = await supabase
         .from('cart_items')
         .upsert({
-          customer_id: customerId,  // 🔑 Foreign key to customers
+          customer_id: customerId,
           product_id: item.id,
           name: item.name,
           price: item.price,
-          quantity: latestQuantity,
-          texture: item.texture,
-          flavors: item.flavors,
-          toppings: (item as any).toppings
+          quantity: updatedQuantity,
+          texture: item.texture || '',
+          flavors: item.flavors || [],  // ✅ Pass array directly (text[])
+          toppings: []                  // ✅ Add toppings field
         }, { onConflict: 'customer_id, product_id' });
 
-      if (error) console.error("Error syncing to DB:", error.message);
+      if (error) {
+        console.error("❌ DB sync error:", error.message);
+      } else {
+        console.log(`✅ Synced: ${item.name} qty=${updatedQuantity}`);
+      }
     }
   };
 
@@ -89,6 +99,7 @@ export function useCart() {
       removeFromCart(itemId);
       return;
     }
+    
     setCart(prevCart =>
       prevCart.map(item =>
         item.id === itemId ? { ...item, quantity } : item
