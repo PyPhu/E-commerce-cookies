@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { UserInfo, Order } from "../../types";
-import { User, Package, MapPin, Mail, Phone, Edit2, Save, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { User, Package, MapPin, Mail, Phone, Edit2, Save, X, Loader2, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";
@@ -146,10 +146,43 @@ export function UserProfilePage() {
     setIsEditing(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      // log out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        toast.error("Logout failed: " + error.message);
+        return;
+      }
+
+      // clear localStorage
+      localStorage.removeItem("cookie-shop-user");
+
+      toast.success("Logged out successfully");
+      navigate("/login");
+
+    } catch (error) {
+      toast.error("Logout failed");
+      console.error("Logout error:", error);
+    }
+  };
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      <h1 className="text-4xl mb-8">My Profile</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">My Profile</h1>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border border-black-200 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+        >
+          <LogOut size={16} />
+          Logout
+        </button>
+      </div>
 
       <div className="grid md:grid-cols-3 gap-8">
         {/*(Personal Info)*/}
@@ -284,7 +317,7 @@ export function UserProfilePage() {
             <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-3">
               {/* ตกแต่งด้วยไอคอนเก๋ ๆ ไอคอน User หรือ Code ก็ได้ */}
               <div className="bg-amber-100 p-2 rounded-lg text-amber-700">
-                <User className="w-5 h-5" /> 
+                <User className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="font-bold text-gray-800">Developer Profile</h3>
@@ -308,7 +341,7 @@ export function UserProfilePage() {
           </div>
         </div>
 
-        
+
 
         {/*(Order History)*/}
         <div className="md:col-span-2">
@@ -345,12 +378,12 @@ export function UserProfilePage() {
                       <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p>
                       <span
                         className={`px-3 py-1 rounded-full text-sm capitalize font-bold ${order.status === "shipped"
-                            ? "bg-green-100 text-green-700"
-                            : order.status === "prepare"
-                              ? "bg-blue-100 text-blue-700"
-                              : order.status === "paid"
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-gray-100 text-gray-700" /* 👈 จะเข้าเงื่อนไขสีเทานี้อัตโนมัติเมื่อสถานะเป็น "pending" */
+                          ? "bg-green-100 text-green-700"
+                          : order.status === "prepare"
+                            ? "bg-blue-100 text-blue-700"
+                            : order.status === "paid"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-700" /* 👈 จะเข้าเงื่อนไขสีเทานี้อัตโนมัติเมื่อสถานะเป็น "pending" */
                           }`}
                       >
                         {order.status}
