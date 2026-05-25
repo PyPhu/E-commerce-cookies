@@ -10,7 +10,7 @@ const app = express() // สร้าง backend server
 
 const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
-    process.env.VITE_SUPABASE_ANON_KEY
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 )
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -102,7 +102,7 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
             const { data: order, error: orderError } = await supabase
                 .from('orders')
                 .insert({
-                    customer_id: customer.id,
+                    customer_id: customer[0].id,
                     status: 'paid'
                 })
                 .select('id')
@@ -133,7 +133,7 @@ app.post("/webhook", express.raw({ type: 'application/json' }), async (req, res)
             await supabase
                 .from('cart_items')
                 .delete()
-                .eq('customer_id', customer.id);
+                .eq('customer_id', customer[0].id);
 
             console.log("✅ บันทึก Order และสินค้าลงฐานข้อมูล Supabase เรียบร้อยแล้ว!");
         } catch (dbError) {
