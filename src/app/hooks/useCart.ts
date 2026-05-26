@@ -70,7 +70,7 @@ export function useCart() {
           quantity: updatedQuantity,
           texture: item.texture || '',
           flavor: item.flavor || '',
-          toppings: []                  // ✅ Add toppings field
+          toppings: item.toppings || []                  // ✅ Add toppings field
         }, { onConflict: 'customer_id, product_id' });
 
       if (error) {
