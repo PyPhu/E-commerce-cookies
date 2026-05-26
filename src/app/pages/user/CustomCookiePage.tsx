@@ -22,8 +22,8 @@ export function CustomCookiePage() {
 
   const toggleTopping = (topping: string) => {
     setSelectedToppings((prev) =>
-      prev.includes(topping) 
-        ? prev.filter((t) => t !== topping) 
+      prev.includes(topping)
+        ? prev.filter((t) => t !== topping)
         : [...prev, topping]
     );
   };
@@ -41,7 +41,7 @@ export function CustomCookiePage() {
           const textureType = texturesRes.data.map((t: any) => t.type);
           setDbTextures(textureType);
           if (textureType.length > 0) setTexture(textureType[0]);
-        } 
+        }
 
         if (flavorsRes.data) {
           setDbFlavors(flavorsRes.data.map((f: any) => f.type));
@@ -55,8 +55,8 @@ export function CustomCookiePage() {
         toast.error("Could not load cookie options");
       }
     }
-    
-    fetchIngredients(); 
+
+    fetchIngredients();
   }, []);
 
   const handleAddToCart = async () => {
@@ -72,7 +72,7 @@ export function CustomCookiePage() {
         .from('custom_menu')
         .insert({
           texture: [texture],
-          flavors: [selectedFlavor], 
+          flavor: selectedFlavor,
           toppings: selectedToppings
         })
         .select('id')
@@ -81,22 +81,22 @@ export function CustomCookiePage() {
       if (menuError) throw menuError;
 
       const customCookie = {
-        id: `custom-${menuData.id}`, 
+        id: `custom-${menuData.id}`,
         name: `Custom Cookie Combo Set (${selectedFlavor})`,
         type: "custom",
-        price: 399, 
+        price: 399,
         texture: texture,
-        flavors: [selectedFlavor], // หุ้ม Array ส่งเข้า cart_items.flavors 
-        toppings: selectedToppings, 
+        flavor: selectedFlavor,
+        toppings: selectedToppings,
       };
 
       await addToCart(customCookie as any);
-      
+
       toast.success("Saved recipe and added to cart!");
-      
+
       setSelectedFlavor("");
       setSelectedToppings([]);
-      
+
       navigate("/cart");
 
     } catch (error) {
@@ -124,7 +124,7 @@ export function CustomCookiePage() {
           </div>
         </div>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-md p-8 mb-8">
         {/* Texture Selection */}
         <div className="mb-8">
@@ -134,9 +134,8 @@ export function CustomCookiePage() {
               <button
                 key={t}
                 onClick={() => setTexture(t)}
-                className={`flex-1 py-4 px-6 rounded-lg border-2 font-medium transition-all capitalize ${
-                  texture === t ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
+                className={`flex-1 py-4 px-6 rounded-lg border-2 font-medium transition-all capitalize ${texture === t ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
               >
                 {t}
               </button>
@@ -153,9 +152,8 @@ export function CustomCookiePage() {
               <button
                 key={flavor}
                 onClick={() => handleSelectFlavor(flavor)}
-                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${
-                  selectedFlavor === flavor ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
+                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${selectedFlavor === flavor ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
               >
                 {flavor}
               </button>
@@ -171,9 +169,8 @@ export function CustomCookiePage() {
               <button
                 key={topping}
                 onClick={() => toggleTopping(topping)}
-                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${
-                  selectedToppings.includes(topping) ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
+                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${selectedToppings.includes(topping) ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
               >
                 {topping}
               </button>

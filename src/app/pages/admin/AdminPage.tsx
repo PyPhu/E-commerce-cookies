@@ -11,7 +11,7 @@ type OrderRow = {
   id: number;
   created_at: string;
   status: string;
-  price_paid: number; 
+  price_paid: number;
   customers: any;
   order_items: Array<{
     id: number;
@@ -33,7 +33,7 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
     const items = orderItems.map((item) => {
       // 🟢 ตรวจสอบคำในฟิลด์ flavor เพื่อแยกกลุ่มตามหน้าดีไซน์เว็บ
       const currentFlavor = (item.flavor || "").toLowerCase().trim();
-      let baseName = "Custom Cookie"; 
+      let baseName = "Custom Cookie";
 
       if (currentFlavor.includes("triple chocolate")) {
         baseName = "Triple Chocolate";
@@ -46,8 +46,8 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
       // เฉลี่ยราคาต่อชิ้นจากยอดรวมที่จ่ายจริง
       const unitPrice = totalQuantityInOrder > 0 ? totalPricePaid / totalQuantityInOrder : 0;
       const toppingsList = item.toppings ?? [];
-      const displayName = item.texture 
-        ? `${item.texture} ${baseName}` 
+      const displayName = item.texture
+        ? `${item.texture} ${baseName}`
         : baseName;
 
       return {
@@ -56,7 +56,7 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
         displayName: toppingsList.length > 0 ? `${displayName} (${toppingsList.join(", ")})` : displayName,
         type: baseName === "Custom Cookie" ? ("custom" as const) : ("menu" as const),
         price: unitPrice,
-        flavors: item.flavor ? [item.flavor, ...toppingsList] : toppingsList,
+        flavor: item.flavor ?? '',
         quantity: item.quantity ?? 0,
       };
     });
@@ -161,11 +161,11 @@ export function AdminPage() {
 
   const flavorData = thisWeekOrders.reduce((acc, order) => {
     order.items.forEach(item => {
-      item.flavors?.forEach(flavor => {
-        const existing = acc.find((f: any) => f.flavor.toLowerCase() === flavor.toLowerCase());
+      if (item.flavor) {
+        const existing = acc.find((f: any) => f.flavor.toLowerCase() === item.flavor!.toLowerCase());
         if (existing) existing.count += item.quantity;
-        else acc.push({ flavor, count: item.quantity });
-      });
+        else acc.push({ flavor: item.flavor, count: item.quantity });
+      }
     });
     return acc;
   }, [] as any[]).sort((a, b) => b.count - a.count);

@@ -37,7 +37,8 @@ export function HomePage() {
           type: "menu" as const,
           price: p.price,
           texture: p.texture,
-          flavors: p.flavors ?? [],
+          flavor: p.flavor ?? '',
+          toppings: p.toppings,
           image: p.image_url ? storageData.publicUrl : undefined,
         };
       });
@@ -86,7 +87,7 @@ export function HomePage() {
               <div className="p-6">
                 <h3 className="text-xl mb-2">{cookie.name}</h3>
                 <p className="text-gray-600 text-sm mb-4 capitalize">
-                  {cookie.texture} • {cookie.flavors?.join(", ")}
+                  {cookie.texture} • {cookie.flavor} • {cookie.toppings?.join(", ")}
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl text-amber-600">฿{cookie.price.toFixed(2)}</span>

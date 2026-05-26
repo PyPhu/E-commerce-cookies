@@ -69,7 +69,7 @@ export function useCart() {
           price: item.price,
           quantity: updatedQuantity,
           texture: item.texture || '',
-          flavors: item.flavors || [],  // ✅ Pass array directly (text[])
+          flavor: item.flavor || '',
           toppings: []                  // ✅ Add toppings field
         }, { onConflict: 'customer_id, product_id' });
 

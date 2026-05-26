@@ -4,7 +4,7 @@ export interface MenuItem {
   type: 'menu' | 'custom';
   price: number;
   texture?: 'hard' | 'soft';
-  flavors?: string[];
+  flavor?: string;
   toppings?: string[];
 }
 

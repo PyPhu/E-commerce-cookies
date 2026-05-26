@@ -76,7 +76,7 @@ export function CartPage() {
             <div className="flex-1">
               <h3 className="text-lg mb-1">{item.name}</h3>
               <p className="text-gray-600 text-sm capitalize">
-                {item.texture} • {item.flavors?.join(", ")}
+                {item.texture} • {item.flavor} • {item.toppings?.join(", ")}
               </p>
             </div>
 
