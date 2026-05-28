@@ -313,9 +313,8 @@ export function UserProfilePage() {
             )}
           </div>
           {/* Developer Profile*/}
-          <div className="bg-white rounded-lg shadow-md p-6 mt-6"> {/* mt-6 ช่วยดันระยะห่างจากกล่องบน */}
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
             <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-3">
-              {/* ตกแต่งด้วยไอคอนเก๋ ๆ ไอคอน User หรือ Code ก็ได้ */}
               <div className="bg-amber-100 p-2 rounded-lg text-amber-700">
                 <User className="w-5 h-5" />
               </div>
@@ -328,7 +327,7 @@ export function UserProfilePage() {
             <div className="space-y-2 text-sm text-gray-700">
               <p className="flex justify-between">
                 <span className="text-gray-500">Developed by:</span>
-                <span className="font-semibold text-gray-900">Your Name / Team Name</span> {/* 👈 เปลี่ยนชื่อคุณตรงนี้ */}
+                <span className="font-semibold text-gray-900">Your Name / Team Name</span>
               </p>
               <p className="flex justify-between">
                 <span className="text-gray-500">Role:</span>
@@ -340,8 +339,6 @@ export function UserProfilePage() {
             </div>
           </div>
         </div>
-
-
 
         {/*(Order History)*/}
         <div className="md:col-span-2">
@@ -368,29 +365,27 @@ export function UserProfilePage() {
                   <div key={order.id} className="border border-gray-200 rounded-lg p-4 hover:border-amber-300 transition-colors">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        {/* order.id from orders */}
                         <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p>
                         <p className="text-sm text-gray-500">
-                          {/* นำเวลา timestamptz (created_at) มาแปลงให้เป็นภาษาอ่านง่าย */}
                           {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
                         </p>
                       </div>
-                      <p className="text-sm text-gray-600 font-bold">Order ID: #{order.id}</p>
+                      
+                      {/* 🌟 ปรับปรุงส่วนการเช็คสเตตัสและจับคู่สีสันให้ตรงกับฝั่งแอดมิน */}
                       <span
-                        className={`px-3 py-1 rounded-full text-sm capitalize font-bold ${order.status === "shipped"
-                          ? "bg-green-100 text-green-700"
-                          : order.status === "prepare"
-                            ? "bg-blue-100 text-blue-700"
-                            : order.status === "paid"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-gray-100 text-gray-700" /* 👈 จะเข้าเงื่อนไขสีเทานี้อัตโนมัติเมื่อสถานะเป็น "pending" */
-                          }`}
+                        className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${
+                          order.status === "completed"
+                            ? "bg-green-100 text-green-700" // Shipped
+                            : order.status === "preparing"
+                              ? "bg-blue-100 text-blue-700"  // Baking
+                              : "bg-amber-100 text-amber-700" // Paid
+                        }`}
                       >
-                        {order.status}
+                        {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
                       </span>
                     </div>
 
-                    {/* รายการคุกกี้ในออเดอร์ (ดึงจาก order_items ที่เราฟิลเตอร์ไว้) */}
+                    {/* รายการคุกกี้ในออเดอร์ */}
                     <div className="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg">
                       {order.order_items && order.order_items.map((item: any, index: number) => (
                         <div key={index} className="text-sm flex flex-col border-b border-gray-100 last:border-0 pb-2 last:pb-0">
@@ -400,7 +395,6 @@ export function UserProfilePage() {
                             </span>
                           </div>
 
-                          {/* โชว์รายละเอียด (item.flavor) */}
                           {(item.texture || item.flavor || item.toppings) && (
                             <div className="text-xs text-gray-500 mt-1 pl-3 space-y-0.5">
                               {item.texture && <p>• Texture: {item.texture}</p>}
@@ -415,6 +409,7 @@ export function UserProfilePage() {
 
                   </div>
                 ))}
+                
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-6">
                     <p className="text-sm text-gray-600">
@@ -422,7 +417,6 @@ export function UserProfilePage() {
                       <span className="font-semibold">{totalPages}</span>
                     </p>
                     <div className="flex gap-2">
-                      {/* ปุ่มย้อนกลับ: จะกดไม่ได้ (disabled) ถ้าอยู่หน้า 1 */}
                       <button
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
@@ -431,7 +425,6 @@ export function UserProfilePage() {
                         <ChevronLeft className="w-5 h-5" />
                       </button>
 
-                      {/* ปุ่มไปข้างหน้า: จะกดไม่ได้ถ้าอยู่หน้าสุดท้าย */}
                       <button
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
