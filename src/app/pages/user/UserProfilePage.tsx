@@ -86,7 +86,7 @@ export function UserProfilePage() {
         // pull order_items 
         const { data: itemsData, error: itemsError } = await supabase
           .from('order_items')
-          .select('id, order_id, texture, flavor, toppings, quantity')
+          .select('id, order_id, texture, flavor, toppings, quantity, name, price')
           .in('order_id', orderIds); // ค้นหาไอเทมทั้งหมดที่อยู่ในรายการออเดอร์ชุดนี้
 
         if (itemsError) throw itemsError;
@@ -396,8 +396,9 @@ export function UserProfilePage() {
                         <div key={index} className="text-sm flex flex-col border-b border-gray-100 last:border-0 pb-2 last:pb-0">
                           <div className="flex justify-between text-gray-800">
                             <span className="font-semibold text-amber-800">
-                              {item.quantity}x Custom Cookie ({item.flavor || "Original"})
+                              {item.quantity}x {item.name}
                             </span>
+                            <p className="font-semibold text-amber-800">{item.price}</p>
                           </div>
 
                           {/* โชว์รายละเอียด (item.flavor) */}
