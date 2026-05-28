@@ -177,7 +177,7 @@ export function UserProfilePage() {
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border border-black-200 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border border-black-200 bg-amber-300 hover:bg-amber-400 px-4 py-2 rounded-lg transition-colors"
         >
           <LogOut size={16} />
           Logout
