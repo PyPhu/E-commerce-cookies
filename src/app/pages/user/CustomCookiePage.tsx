@@ -60,49 +60,35 @@ export function CustomCookiePage() {
   }, []);
 
   const handleAddToCart = async () => {
-    // ⚠️ ตรวจสอบค่ารสชาติเดี่ยวแทนอาเรย์เดิม
     if (!selectedFlavor) {
-      toast.error("Please select a flavor!");
+      toast.error("Please select a flavor");
       return;
     }
 
-    try {
-      // save custom_menu
-      const { data: menuData, error: menuError } = await supabase
-        .from('custom_menu')
-        .insert({
-          texture: [texture],
-          flavor: selectedFlavor,
-          toppings: selectedToppings
-        })
-        .select('id')
-        .single();
-
-      if (menuError) throw menuError;
+    try{
+      const uniqueId = `custom-${Date.now()}`;
 
       const customCookie = {
-        id: `custom-${menuData.id}`,
-        name: `Custom Cookie Combo Set (${selectedFlavor})`,
+        id: uniqueId,
+        name: "Custom Cookie",
         type: "custom",
         price: 399,
         texture: texture,
         flavor: selectedFlavor,
-        toppings: selectedToppings,
+        toppings: selectedToppings
+
       };
-
+      // send to usecart function
       await addToCart(customCookie as any);
+      toast.success("Added Custom Set to cart!");
 
-      toast.success("Saved recipe and added to cart!");
-
+      // clear selection after adding to cart
       setSelectedFlavor("");
       setSelectedToppings([]);
-
       navigate("/cart");
-
-    } catch (error) {
-      console.error("Error saving custom cookie:", error);
-      toast.error("Failed to save your custom recipe");
     }
+    catch(error){console.error("Error saving custom cookie:", error);
+      toast.error("Failed to add custom recipe to cart");}
   };
 
   return (

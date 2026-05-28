@@ -7,6 +7,15 @@ import { AdminTables } from "./TableAdminPage";
 
 const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
 
+// โครงสร้างสำหรับรับข้อมูลรายชื่อจากตาราง products
+type ProductRow = {
+  id: number;
+  item: string;
+  price: number;
+  texture: string | null;
+  flavor: string | null;
+};
+
 type OrderRow = {
   id: number;
   created_at: string;
@@ -15,6 +24,7 @@ type OrderRow = {
   customers: any;
   order_items: Array<{
     id: number;
+    name: string | null; // ดึงฟิลด์ name ตามโครงสร้างจริงใน Schema ของคุณ
     texture: string | null;
     flavor: string | null;
     toppings: string[] | null;
@@ -31,30 +41,21 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
     const totalPricePaid = row.price_paid ?? 0;
 
     const items = orderItems.map((item) => {
-      // 🟢 ตรวจสอบคำในฟิลด์ flavor เพื่อแยกกลุ่มตามหน้าดีไซน์เว็บ
-      const currentFlavor = (item.flavor || "").toLowerCase().trim();
-      let baseName = "Custom Cookie";
-
-      if (currentFlavor.includes("triple chocolate")) {
-        baseName = "Triple Chocolate";
-      } else if (currentFlavor.includes("marshmallow delight")) {
-        baseName = "Marshmallow Delight";
-      } else if (item.flavor) {
-        baseName = `${item.flavor} Cookie`;
-      }
-
-      // เฉลี่ยราคาต่อชิ้นจากยอดรวมที่จ่ายจริง
+      // ดึงค่า name จากตาราง order_items โดยตรง หากไม่มี (เป็นค่าว่าง) ให้มองเป็น Custom Cookie
+      const rawName = item.name ? item.name.trim() : "Custom Cookie";
+      
       const unitPrice = totalQuantityInOrder > 0 ? totalPricePaid / totalQuantityInOrder : 0;
       const toppingsList = item.toppings ?? [];
-      const displayName = item.texture
-        ? `${item.texture} ${baseName}`
-        : baseName;
+      
+      // จัดรูปแบบชื่อที่จะนำไปแสดงในตารางให้สวยงาม (เช่น Crisp Triple Chocolate)
+      const baseDisplayName = item.texture ? `${item.texture} ${rawName}` : rawName;
+      const displayName = toppingsList.length > 0 ? `${baseDisplayName} (${toppingsList.join(", ")})` : baseDisplayName;
 
       return {
         id: String(item.id),
-        name: baseName.toLowerCase(), // ส่งเป็นพิมพ์เล็กเพื่อไปแมทช์กับตัวนับใน AdminTables
-        displayName: toppingsList.length > 0 ? `${displayName} (${toppingsList.join(", ")})` : displayName,
-        type: baseName === "Custom Cookie" ? ("custom" as const) : ("menu" as const),
+        name: rawName, // ใช้ชื่อดิบนี้เป็น Key ในการดึงสถิติไปจับคู่ (Match)
+        displayName: displayName,
+        type: rawName.toLowerCase().includes("custom") ? ("custom" as const) : ("menu" as const),
         price: unitPrice,
         flavor: item.flavor ?? '',
         quantity: item.quantity ?? 0,
@@ -81,16 +82,17 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<"overview" | "tables">("overview");
   const [orders, setOrders] = useState<Order[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<string[]>([]); // 🌟 State เก็บรายชื่อสินค้าจริง
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
-    const loadOrders = async () => {
+    const loadDashboardData = async () => {
       setLoading(true);
 
-      // 🟢 คิวรีแบบสะอาด ดึงแค่โครงสร้างที่มีตามรูปภาพ Schema เป๊ะๆ
-      const { data, error: fetchError } = await supabase
+      // 1. ดึงข้อมูลออเดอร์
+      const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(`
           id, 
@@ -100,6 +102,7 @@ export function AdminPage() {
           customers (name, email, phone, address), 
           order_items (
             id, 
+            name,
             texture,
             flavor, 
             toppings, 
@@ -108,15 +111,26 @@ export function AdminPage() {
         `)
         .order("created_at", { ascending: false });
 
+      // 2. ดึงข้อมูลจากตารางสินค้าหลัก (Products Table) 🌟
+      const { data: productsData, error: productsError } = await supabase
+        .from("products")
+        .select("item");
+
       if (!isActive) return;
-      if (fetchError) {
-        setError(fetchError.message);
+
+      if (ordersError || productsError) {
+        setError(ordersError?.message || productsError?.message || "Fetch error");
       } else {
-        setOrders(formatSupabaseOrders((data ?? []) as unknown as OrderRow[]));
+        // แปรรูปข้อมูลสินค้ารองรับการทำกล่องสถิติแบบไดนามิก
+        const productNames = (productsData as ProductRow[] ?? []).map(p => p.item.trim());
+        setAvailableProducts(productNames);
+        
+        setOrders(formatSupabaseOrders((ordersData ?? []) as unknown as OrderRow[]));
       }
       setLoading(false);
     };
-    loadOrders();
+
+    loadDashboardData();
     return () => { isActive = false; };
   }, []);
 
@@ -142,6 +156,7 @@ export function AdminPage() {
     return acc;
   }, [] as any[]);
 
+  // สรุปยอดนับคุกกี้แยกรายประเภท
   const cookieTypeData = orders.reduce((acc, order) => {
     order.items.forEach(item => {
       const type = item.name;
@@ -175,6 +190,7 @@ export function AdminPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
+      {/* ... ส่วนของ Layout Dashboard เหมือนเดิมทุกประการ ... */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
 
@@ -238,7 +254,8 @@ export function AdminPage() {
         </div>
       ) : (
         <div className="animate-in slide-in-from-bottom-4 duration-500">
-          <AdminTables orders={orders || []} cookieSummary={cookieTypeData} />
+          {/* ส่งรายชื่อเมนูสินค้าหลักที่ดึงจากฐานข้อมูลเข้าไปทำงานด้วย 🌟 */}
+          <AdminTables orders={orders || []} cookieSummary={cookieTypeData} availableProducts={availableProducts} />
         </div>
       )}
     </div>
@@ -246,7 +263,7 @@ export function AdminPage() {
 }
 
 function StatCard({ title, value, icon }: { title: string, value: any, icon: any }) {
-  return (
+  return ( 
     <div className="bg-white rounded-lg shadow-md p-6 border-b-4 border-amber-500">
       <div className="flex items-center justify-between mb-2">
         <span className="text-gray-600 font-medium">{title}</span>
@@ -258,7 +275,7 @@ function StatCard({ title, value, icon }: { title: string, value: any, icon: any
 }
 
 function ChartCard({ title, children }: { title: string, children: React.ReactNode }) {
-  return (
+  return ( 
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl mb-4 font-semibold text-gray-800">{title}</h2>
       <ResponsiveContainer width="100%" height={300}>
