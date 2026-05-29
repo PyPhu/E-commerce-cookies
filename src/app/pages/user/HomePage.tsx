@@ -1,7 +1,7 @@
 import { useCart } from "../../hooks/useCart";
 import { MenuItem } from "../../types";
 import { toast } from "sonner";
-import { Cookie, Plus } from "lucide-react";
+import { Cookie, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../backend/supabaseClient";
 
@@ -11,6 +11,9 @@ export function HomePage() {
   const { addToCart } = useCart();
   const [menuCookies, setMenuCookies] = useState<MenuItemWithImage[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  //  URL ของรูปที่ต้องการเปิดดูขนาดใหญ่
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -29,7 +32,6 @@ export function HomePage() {
         const { data: storageData } = supabase.storage
           .from("cookie_images")
           .getPublicUrl(p.image_url);
-
 
         return {
           id: String(p.id),
@@ -74,13 +76,23 @@ export function HomePage() {
               key={cookie.id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center overflow-hidden">
+              {/* cursor-pointer และ onClick */}
+              <div 
+                className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center overflow-hidden cursor-pointer group relative"
+                onClick={() => cookie.image && setSelectedImage(cookie.image)}
+              >
                 {cookie.image ? (
-                  <img
-                    src={cookie.image}
-                    alt={cookie.name}
-                    className="h-full w-full object-cover"
-                  />
+                  <>
+                    <img
+                      src={cookie.image}
+                      alt={cookie.name}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {/* เพิ่ม Overlay เล็กน้อยตอนเอาเมาส์มาวางให้รู้ว่ากดขยายได้ */}
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium text-sm">
+                      Click to view
+                    </div>
+                  </>
                 ) : (
                   <Cookie className="w-12 h-12 text-amber-600" />
                 )}
@@ -118,6 +130,32 @@ export function HomePage() {
           Build Your Cookie
         </a>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in"
+          onClick={() => setSelectedImage(null)} // กดพื้นที่ว่างด้านนอกเพื่อปิด
+        >
+          <div className="relative max-w-4xl max-h-[85vh] bg-white rounded-lg  overflow-hidden shadow-2xl">
+            {/* ปุ่มปิด Modal */}
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black/80 transition-colors z-10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* รูปภาพขนาดใหญ่ */}
+            <img
+              src={selectedImage}
+              alt="Cookie preview"
+              className="max-w-full max-h-[80vh] object-contain rounded"
+              onClick={(e) => e.stopPropagation()} // บล็อกไม่ให้กดที่ตัวรูปภาพแล้ว Modal ปิด
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
