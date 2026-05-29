@@ -155,7 +155,7 @@ export function CustomCookiePage() {
               <button
                 key={topping}
                 onClick={() => toggleTopping(topping)}
-                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${selectedToppings.includes(topping) ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                className={`py-3 px-2 rounded-lg border-2 font-medium transition-all capitalize ${selectedToppings.includes(topping) ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
               >
                 {topping}
