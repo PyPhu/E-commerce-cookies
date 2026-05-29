@@ -66,7 +66,7 @@ export function CheckoutPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Session expired, please sign in again");
-        navigate("/login");
+        navigate("/login", { state : {from: "/checkout"} });
         return;
       }
 
