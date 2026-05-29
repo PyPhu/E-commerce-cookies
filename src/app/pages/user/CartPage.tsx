@@ -71,17 +71,17 @@ export function CartPage() {
         {cart.map((item) => (
           <div
             key={item.id}
-            className="p-6 border-b last:border-b-0 flex flex-col sm:flex-row items-start sm:items-center gap-6"
+            className="p-6 border-b last:border-b-0 flex flex-row flex-wrap items-start justify-between gap-6"
           >
             <div className="flex-1 min-w-0">
               <h3 className="text-lg mb-1">{item.name}</h3>
               <p className="text-gray-600 text-sm capitalize">
-                {item.texture} • {item.flavor} • {item.toppings?.join(", ")}
+                {item.texture}•{item.flavor}•{item.toppings?.join(", ")}
               </p>
             </div>
 
-            <div className="flex flex-col sm:items-end justify-between gap-4 sm:gap-2 w-full sm:w-auto">
-              <div className="flex items-center gap-3 justify-start sm:justify-end">
+            <div className="flex flex-col items-end gap-4 shrink-0 min-w-[180px]">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
@@ -97,7 +97,7 @@ export function CartPage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-3">
                 <div className="text-right">
                   <span className="text-lg">฿{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
