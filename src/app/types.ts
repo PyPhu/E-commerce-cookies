@@ -28,3 +28,14 @@ export interface Order {
   status: 'pending' | 'preparing' | 'ready' | 'completed';
   createdAt: Date;
 }
+
+export interface Product {
+  id?: number; 
+  item: string; 
+  price: number; 
+  texture: string; 
+  flavor: string; 
+  image_url: string; 
+  show: boolean; 
+  toppings: string[]; 
+}

@@ -14,6 +14,7 @@ import { CancelPage } from "./pages/user/CancelPage";
 import { LoginPage } from "./pages/user/LoginPage";
 import { ForgotPasswordPage } from "./pages/user/Register/ForgetpassPage";
 import { AuthProvider } from "./components/AdminAuth";
+import { AdminProducts } from "./pages/admin/AdminProducts";
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <AdminPage /> },
+      { path: 'products', element: <AdminProducts /> }
     ]
   }]}
 ]);

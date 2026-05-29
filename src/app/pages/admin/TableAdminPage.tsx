@@ -59,19 +59,31 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
       {/* ส่วนที่ 1: กล่องสรุปสถิติ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {displayList.map((productName) => {
-          const found = cookieSummary?.find((c) => {
-            const currentCardNameLower = productName.toLowerCase();
-            const currentOrderNameLower = c.name.toLowerCase();
-            if (currentCardNameLower.includes("custom")) return currentOrderNameLower.includes("custom");
-            return currentOrderNameLower === currentCardNameLower;
-          });
+          const isCustomTarget = productName.toLowerCase().includes("custom");
+
+          let totalPieces = 0;
+          if (orders && orders.length > 0) {
+            orders.forEach(order => {
+              // คัดกรอง: ถ้าจัดส่งสำเร็จ (completed) แล้ว จะไม่นำมานับคำนวณบนหน้าการ์ด
+              if (order.status === "completed") return;
+
+              order.items.forEach(item => {
+                const itemNameLower = item.name.toLowerCase();
+                if (isCustomTarget && itemNameLower.includes("custom")) {
+                  totalPieces += item.quantity || 0;
+                } else if (!isCustomTarget && itemNameLower === productName.toLowerCase()) {
+                  totalPieces += item.quantity || 0;
+                }
+              });
+            });
+          }
 
           return (
             <div key={productName} onClick={() => handleCardClick(productName)} className="bg-white p-5 rounded-xl shadow-sm border-l-4 border-amber-500 flex justify-between items-center cursor-pointer hover:bg-amber-50 hover:scale-[1.01] transition-all">
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{productName}</p>
                 <p className="text-2xl font-black text-amber-600">
-                  {orders && orders.length > 0 ? (found?.count || 0) : 0} <span className="text-xs text-gray-400 font-normal">pieces</span>
+                  {totalPieces} <span className="text-xs text-gray-400 font-normal">pieces</span>
                 </p>
               </div>
               <div className="bg-amber-50 p-2 rounded-lg"><Cookie className="w-6 h-6 text-amber-500" /></div>
@@ -86,7 +98,7 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
         onClose={() => setIsModalOpen(false)}
         cardName={selectedCardName}
         filteredOrders={filteredOrders}
-        setFilteredOrders={setFilteredOrders}
+        setFilteredOrders={setFilteredOrders} // เก็บตัวนี้ไว้พอ
       />
 
       {/* ส่วนที่ 2: ตาราง Orders */}
@@ -122,10 +134,10 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                   <td className="py-4 px-4 font-bold text-amber-700">฿{order.total.toFixed(2)}</td>
                   <td className="py-4 px-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${order.status === "completed" ? "bg-green-100 text-green-700" :
-                        order.status === "preparing" ? "bg-blue-100 text-blue-700" :
-                          "bg-amber-100 text-amber-700"
+                      order.status === "preparing" ? "bg-blue-100 text-blue-700" :
+                        "bg-amber-100 text-amber-700" // สำหรับสถานะ paid
                       }`}>
-                      {order.status === "completed" ? "ส่งแล้ว" : order.status === "preparing" ? "กำลังอบ" : "รอทำ"}
+                      {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
                     </span>
                   </td>
                   <td className="py-4 px-4">

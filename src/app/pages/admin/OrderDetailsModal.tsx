@@ -14,32 +14,39 @@ interface OrderDetailsModalProps {
 export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, setFilteredOrders }: OrderDetailsModalProps) {
   if (!isOpen) return null;
 
-  // 🛠️ ยิงอัปเดตสถานะตรงจากตัว Modal เองเลย ไม่ต้องพึ่งพา AdminPage
-  const handleUpdateStatus = async (orderId: string, newStatus: "pending" | "preparing" | "ready" | "completed") => {
-  try {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: newStatus })
-      .eq("id", parseInt(orderId));
+  const handleUpdateStatus = async (orderId: string, newStatus: "paid" | "preparing" | "ready" | "completed") => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", parseInt(orderId));
 
-    if (error) throw error;
+      if (error) throw error;
 
-    toast.success(`อัปเดตสเตตัสออเดอร์ #${orderId} เรียบร้อยแล้ว`);
-    
-    setFilteredOrders(prev => 
-      prev.map(order => order.id === orderId ? { ...order, status: newStatus } : order)
-    );
-    
-  } catch (err: any) {
-    console.error(err);
-    toast.error("ไม่สามารถเปลี่ยนสเตตัสได้: " + err.message);
-  }
-};
+      toast.success(`อัปเดตสเตตัสออเดอร์ #${orderId} เรียบร้อยแล้ว`);
+
+      // 1. อัปเดตสถานะให้ UI ของตัวแปรกลุ่มที่แสดงอยู่ใน Modal เปลี่ยนตามสด ๆ
+      setFilteredOrders(prev =>
+        prev.map(order => order.id === orderId ? { ...order, status: newStatus as any } : order)
+      );
+
+      // 2. ซิงค์ค่าย้อนกลับไปหาออบเจกต์ด้านนอกตารางทันที
+      filteredOrders.forEach(order => {
+        if (order.id === orderId) {
+          order.status = newStatus as any;
+        }
+      });
+
+    } catch (err: any) {
+      console.error(err);
+      toast.error("ไม่สามารถเปลี่ยนสเตตัสได้: " + err.message);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center border-b p-6 bg-amber-50 rounded-t-2xl">
           <div>
@@ -58,7 +65,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
           ) : (
             filteredOrders.map((order) => (
               <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                
+
                 {/* Meta Header */}
                 <div className="bg-gray-100/70 px-4 py-3 border-b flex flex-wrap justify-between items-center gap-4">
                   <div className="flex items-center gap-1.5 text-sm font-bold font-mono text-gray-700">
@@ -68,23 +75,32 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                   {/* แถบเปลี่ยนสถานะ */}
                   <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border shadow-sm">
                     <span className="text-xs text-gray-400 font-bold px-2">Status:</span>
+
+                    {/* ปุ่มที่ 1: เปลี่ยนจาก waiting เป็น Paid */}
                     <button
-                      onClick={() => handleUpdateStatus(order.id, "pending")}
-                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${order.status === "pending" ? "bg-amber-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
+                      onClick={() => handleUpdateStatus(order.id, "paid")}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "paid" ? "bg-amber-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                        }`}
                     >
-                      waiting
+                      Paid
                     </button>
+
+                    {/* ปุ่มที่ 2: preparing */}
                     <button
-                      onClick={() => handleUpdateStatus(order.id, "ready")}
-                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${order.status === "ready" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
+                      onClick={() => handleUpdateStatus(order.id, "preparing")}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "preparing" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                        }`}
                     >
-                      <Flame className="w-3 h-3" /> baking
+                      <Flame className="w-3 h-3" /> Baking
                     </button>
+
+                    {/* ปุ่มที่ 3: completed */}
                     <button
                       onClick={() => handleUpdateStatus(order.id, "completed")}
-                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${order.status === "completed" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "completed" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+                        }`}
                     >
-                      <Truck className="w-3 h-3" /> shipped
+                      <Truck className="w-3 h-3" /> Shipped
                     </button>
                   </div>
                 </div>
@@ -146,7 +162,10 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
 
         {/* Footer */}
         <div className="border-t p-4 bg-gray-50 flex justify-end rounded-b-2xl">
-          <button onClick={onClose} className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
+          >
             close window
           </button>
         </div>

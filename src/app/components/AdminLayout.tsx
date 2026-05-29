@@ -1,5 +1,6 @@
 import { Outlet, Link } from "react-router";
 import { RiAdminFill, RiHome4Line } from "react-icons/ri";
+import { AiTwotoneBug } from "react-icons/ai";
 import { MdStorefront, MdStore } from "react-icons/md";
 import { useAuth } from "./AdminAuth";
 import { supabase } from "../../../backend/supabaseClient";
@@ -111,6 +112,14 @@ export function AdminLayout() {
               {isShopClosed ? <MdStorefront className="w-4 h-4" /> : <MdStore className="w-4 h-4" />}
               {toggling ? "Updating..." : isShopClosed ? "Open Shop" : "Close Shop"}
             </button>
+
+            <Link
+              to="/admin/products"
+              className="flex items-center gap-2 text-slate-300 hover:text-white text-sm border-l border-slate-700 pl-4"
+            >
+              <AiTwotoneBug />
+              <span>edit products</span>
+            </Link>
 
             {/* Exit Link */}
             <Link
