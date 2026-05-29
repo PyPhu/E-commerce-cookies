@@ -121,14 +121,22 @@ export function UserProfilePage() {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
+    }
+
     const { error } = await supabase
       .from('customers')
-      .upsert({
+      .update({
         name: editedInfo.name,
         email: editedInfo.email,
         phone: editedInfo.phone,
         address: editedInfo.address,
-      }, { onConflict: 'email' });
+      })
+      .eq('id', user.id);
 
     if (error) {
       toast.error("Failed to save profile: " + error.message);
