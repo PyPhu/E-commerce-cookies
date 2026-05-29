@@ -26,7 +26,7 @@ export function CheckoutPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please sign in to continue checkout");
-        navigate("/login");
+        navigate("/login", { replace: true, state: { from: "/checkout" } });
         return;
       }
 
