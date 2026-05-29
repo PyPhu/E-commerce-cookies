@@ -55,7 +55,7 @@ export function CheckoutPage() {
     if (e) e.preventDefault();
 
     if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
-      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -89,11 +89,11 @@ export function CheckoutPage() {
         window.location.href = data.url;
       } else {
         console.error("Edge function error:", data);
-        toast.error("เกิดข้อผิดพลาดในการสร้างรายการชำระเงิน");
+        toast.error("can't create payment session");
       }
     } catch (error) {
       console.error(error);
-      toast.error("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+      toast.error("can't connect to payment gateway");
     }
   };
 
@@ -104,21 +104,21 @@ export function CheckoutPage() {
       <div className="grid md:grid-cols-2 gap-8">
         {/* ฝั่งกรอกข้อมูล */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl mb-6">ข้อมูลการจัดส่ง</h2>
+          <h2 className="text-2xl mb-6">Delivery Information</h2>
           <form onSubmit={handleCheckout} className="space-y-4">
             <div>
-              <label className="block text-sm mb-2">ชื่อ-นามสกุล</label>
+              <label className="block text-sm mb-2">Full Name</label>
               <input
                 type="text"
                 value={userInfo.name}
                 onChange={(e) => setUserInfo({ ...userInfo, name: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-amber-600"
-                placeholder="สมชาย ใจดี"
+                placeholder="Somchai Jaidee"
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-2">อีเมล</label>
+              <label className="block text-sm mb-2">Email</label>
               <input
                 type="email"
                 value={userInfo.email}
@@ -129,7 +129,7 @@ export function CheckoutPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">เบอร์โทรศัพท์</label>
+              <label className="block text-sm mb-2">Phone Number</label>
               <input
                 type="tel"
                 value={userInfo.phone}
@@ -140,13 +140,13 @@ export function CheckoutPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-2">ที่อยู่จัดส่ง</label>
+              <label className="block text-sm mb-2">Address</label>
               <textarea
                 value={userInfo.address}
                 onChange={(e) => setUserInfo({ ...userInfo, address: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-amber-600"
                 rows={3}
-                placeholder="เลขที่บ้าน, ถนน, แขวง/ตำบล, เขต/อำเภอ, จังหวัด, รหัสไปรษณีย์"
+                placeholder="House number, Street, Subdistrict/Neighborhood, District/City, Province, Postal Code"
               />
             </div>
 
@@ -155,29 +155,21 @@ export function CheckoutPage() {
               className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 flex items-center justify-center gap-2 font-semibold"
             >
               <Mail className="w-5 h-5" />
-              ชำระเงินด้วย PromptPay
+              Pay with PromptPay
             </button>
 
-            {/* ลบออกหลังจากทดสอบ */}
-            <button
-              type="button"
-              onClick={() => window.location.href = '/cancel'}
-              className="text-sm text-gray-400 underline"
-            >
-              Test: Simulate Cancel Payment
-            </button>
           </form>
         </div>
 
         {/* ฝั่งสรุปคำสั่งซื้อ */}
         <div className="bg-white rounded-lg shadow-md p-6 h-fit">
-          <h2 className="text-2xl mb-6">สรุปคำสั่งซื้อ</h2>
+          <h2 className="text-2xl mb-6">Order Summary</h2>
           <div className="space-y-4 mb-6">
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between">
                 <div>
                   <p className="mb-1 font-medium">{item.name}</p>
-                  <p className="text-sm text-gray-600">จำนวน: {item.quantity}</p>
+                  <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
                 </div>
                 <span>฿{(item.price * item.quantity).toFixed(2)}</span>
               </div>
@@ -185,7 +177,7 @@ export function CheckoutPage() {
           </div>
           <div className="border-t pt-4">
             <div className="flex justify-between text-xl font-bold">
-              <span>ยอดรวมสุทธิ</span>
+              <span>Total</span>
               <span className="text-amber-600">฿{totalPrice.toFixed(2)}</span>
             </div>
           </div>
