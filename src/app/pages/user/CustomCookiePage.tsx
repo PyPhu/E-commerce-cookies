@@ -115,12 +115,12 @@ export function CustomCookiePage() {
         {/* Texture Selection */}
         <div className="mb-8">
           <h2 className="text-2xl mb-4 font-semibold text-gray-800">Texture</h2>
-          <div className="flex gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {dbTextures.map((t) => (
               <button
                 key={t}
                 onClick={() => setTexture(t)}
-                className={`flex-1 py-4 px-6 rounded-lg border-2 font-medium transition-all capitalize ${texture === t ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                className={`w-full py-4 px-6 rounded-lg border-2 font-medium transition-all capitalize ${texture === t ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
               >
                 {t}
@@ -167,7 +167,7 @@ export function CustomCookiePage() {
 
       {/* submit button */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
           <div>
             <h3 className="text-xl font-bold text-gray-800">Your Custom Box (10 pcs)</h3>
             <p className="text-gray-600 text-sm capitalize">

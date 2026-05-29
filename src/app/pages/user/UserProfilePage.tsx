@@ -179,7 +179,7 @@ export function UserProfilePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-4xl font-bold">My Profile</h1>
 
         {/* Logout button */}

@@ -71,7 +71,7 @@ export function CartPage() {
         {cart.map((item) => (
           <div
             key={item.id}
-            className="p-6 border-b last:border-b-0 flex items-center gap-6"
+            className="p-6 border-b last:border-b-0 flex flex-col sm:flex-row items-start sm:items-center gap-6"
           >
             <div className="flex-1">
               <h3 className="text-lg mb-1">{item.name}</h3>
@@ -111,11 +111,11 @@ export function CartPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
             <p className="text-gray-600">Total Items: {totalItems}</p>
           </div>
-          <div className="text-right">
+          <div className="text-left sm:text-right">
             <p className="text-gray-600 text-sm mb-1">Total</p>
             <p className="text-3xl text-amber-600">฿{totalPrice.toFixed(2)}</p>
           </div>

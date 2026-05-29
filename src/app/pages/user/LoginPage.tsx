@@ -110,8 +110,10 @@ export function LoginPage() {
             background: "#fff",
             borderRadius: "14px",
             border: "1px solid #EDE4D6",
-            width: "420px",
+            width: "100%",
+            maxWidth: "420px",
             padding: "2.25rem 2rem",
+            boxSizing: "border-box",
           }}
         >
           {/* Tabs */}
