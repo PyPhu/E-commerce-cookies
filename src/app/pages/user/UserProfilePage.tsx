@@ -335,14 +335,16 @@ export function UserProfilePage() {
             <div className="space-y-2 text-sm text-gray-700">
               <p className="flex justify-between">
                 <span className="text-gray-500">Developed by:</span>
-                <span className="font-semibold text-gray-900">Your Name / Team Name</span>
+                <span className=" text-gray-500">Phurin</span>
               </p>
+              <p><span className="flex justify-end text-gray-500">Krissada</span></p>
+              <p><span className="flex justify-end text-gray-500">Sopolwit</span></p>
               <p className="flex justify-between">
                 <span className="text-gray-500">Role:</span>
-                <span className="text-amber-700 font-medium">Full-Stack Developer</span>
+                <span className="text-amber-500 font-medium">Full-Stack Developer</span>
               </p>
               <p className="text-xs text-gray-400 border-t border-gray-50 pt-2 mt-2 text-center">
-                © {new Date().getFullYear()} Cookie Shop Project. All rights reserved.
+                © {new Date().getFullYear()} Cookie Shop Project.
               </p>
             </div>
           </div>
@@ -382,10 +384,10 @@ export function UserProfilePage() {
                       {/* 🌟 ปรับปรุงส่วนการเช็คสเตตัสและจับคู่สีสันให้ตรงกับฝั่งแอดมิน */}
                       <span
                         className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${order.status === "completed"
-                            ? "bg-green-100 text-green-700" // Shipped
-                            : order.status === "preparing"
-                              ? "bg-blue-100 text-blue-700"  // Baking
-                              : "bg-amber-100 text-amber-700" // Paid
+                          ? "bg-green-100 text-green-700" // Shipped
+                          : order.status === "preparing"
+                            ? "bg-blue-100 text-blue-700"  // Baking
+                            : "bg-amber-100 text-amber-700" // Paid
                           }`}
                       >
                         {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
