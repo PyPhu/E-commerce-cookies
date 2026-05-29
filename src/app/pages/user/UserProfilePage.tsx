@@ -328,7 +328,7 @@ export function UserProfilePage() {
               </div>
               <div>
                 <h3 className="font-bold text-gray-800">Developer Profile</h3>
-                <p className="text-xs text-gray-500">System Creator</p>
+                <p className="text-xs text-gray-500">student from kmitl</p>
               </div>
             </div>
 
