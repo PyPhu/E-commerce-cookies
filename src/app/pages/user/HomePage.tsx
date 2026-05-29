@@ -52,6 +52,7 @@ export function HomePage() {
 
   const handleAddToCart = (cookie: MenuItem) => {
     addToCart(cookie);
+    console.log(`Added to cart: ${cookie.toppings?.join(", ")} ${cookie.name} (ID: ${cookie.id})`);
     toast.success(`Added ${cookie.name} to cart!`);
   };
 

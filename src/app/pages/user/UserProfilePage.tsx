@@ -121,14 +121,22 @@ export function UserProfilePage() {
       return;
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error("User not authenticated");
+      return;
+    }
+
     const { error } = await supabase
       .from('customers')
-      .upsert({
+      .update({
         name: editedInfo.name,
         email: editedInfo.email,
         phone: editedInfo.phone,
         address: editedInfo.address,
-      }, { onConflict: 'email' });
+      })
+      .eq('id', user.id);
 
     if (error) {
       toast.error("Failed to save profile: " + error.message);
@@ -177,7 +185,7 @@ export function UserProfilePage() {
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border border-black-200 hover:bg-gray-200 px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 border border-black-200 bg-amber-300 hover:bg-amber-400 px-4 py-2 rounded-lg transition-colors"
         >
           <LogOut size={16} />
           Logout
@@ -370,16 +378,15 @@ export function UserProfilePage() {
                           {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
                         </p>
                       </div>
-                      
+
                       {/* 🌟 ปรับปรุงส่วนการเช็คสเตตัสและจับคู่สีสันให้ตรงกับฝั่งแอดมิน */}
                       <span
-                        className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${
-                          order.status === "completed"
+                        className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${order.status === "completed"
                             ? "bg-green-100 text-green-700" // Shipped
                             : order.status === "preparing"
                               ? "bg-blue-100 text-blue-700"  // Baking
                               : "bg-amber-100 text-amber-700" // Paid
-                        }`}
+                          }`}
                       >
                         {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
                       </span>
@@ -399,6 +406,7 @@ export function UserProfilePage() {
                           {(item.texture || item.flavor || item.toppings) && (
                             <div className="text-xs text-gray-500 mt-1 pl-3 space-y-0.5">
                               {item.texture && <p>• Texture: {item.texture}</p>}
+                              {item.flavor && <p>• Flavor: {item.flavor}</p>}
                               {item.toppings && (
                                 <p>• Toppings: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</p>
                               )}
@@ -410,7 +418,7 @@ export function UserProfilePage() {
 
                   </div>
                 ))}
-                
+
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-6">
                     <p className="text-sm text-gray-600">
