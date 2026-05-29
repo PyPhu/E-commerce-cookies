@@ -105,7 +105,7 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl mb-4 font-bold text-amber-900">Orders Table</h2>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="min-w-[720px] w-full">
             <thead className="bg-gray-50">
               <tr className="border-b text-gray-700 font-semibold">
                 <th className="text-left py-3 px-4">Order ID</th>

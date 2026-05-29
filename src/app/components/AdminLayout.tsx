@@ -76,21 +76,21 @@ export function AdminLayout() {
     <div className="min-h-screen bg-gray-100">
       {/* Admin Top Navbar */}
       <header className="sticky top-0 bg-slate-900 text-white shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
 
-          <div className="flex items-center gap-8">
-            <Link to="/admin" className="flex items-center gap-2 hover:text-yellow-400 transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2 w-full md:w-auto">
+            <Link to="/admin" className="flex items-center gap-2 hover:text-yellow-400 transition-colors whitespace-nowrap">
               <RiAdminFill className="w-6 h-6 text-yellow-400" />
               <span className="font-bold text-xl uppercase tracking-wider">Admin Center</span>
             </Link>
             {user && (
-              <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
+              <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded break-words">
                 Logged in as: {user.email}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap justify-end items-center gap-2 w-full md:w-auto">
 
             {/* Shop status pill */}
             <span className={`text-xs px-2 py-1 rounded-full font-medium ${

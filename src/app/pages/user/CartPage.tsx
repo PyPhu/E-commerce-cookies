@@ -73,39 +73,42 @@ export function CartPage() {
             key={item.id}
             className="p-6 border-b last:border-b-0 flex flex-col sm:flex-row items-start sm:items-center gap-6"
           >
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h3 className="text-lg mb-1">{item.name}</h3>
               <p className="text-gray-600 text-sm capitalize">
                 {item.texture} • {item.flavor} • {item.toppings?.join(", ")}
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="w-8 text-center">{item.quantity}</span>
-              <button
-                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
+            <div className="flex flex-col sm:items-end justify-between gap-4 sm:gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-3 justify-start sm:justify-end">
+                <button
+                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-8 text-center">{item.quantity}</span>
+                <button
+                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
 
-            <div className="w-24 text-right">
-              <span className="text-lg">฿{(item.price * item.quantity).toFixed(2)}</span>
+              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                <div className="text-right">
+                  <span className="text-lg">฿{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-red-600 hover:text-red-700 p-2"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-
-            <button
-              onClick={() => removeFromCart(item.id)}
-              className="text-red-600 hover:text-red-700 p-2"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
           </div>
         ))}
       </div>

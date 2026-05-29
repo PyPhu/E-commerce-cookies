@@ -191,10 +191,10 @@ export function AdminPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* ... ส่วนของ Layout Dashboard เหมือนเดิมทุกประการ ... */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
         <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
 
-        <div className="flex bg-gray-100 p-1 rounded-xl shadow-inner">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-gray-100 p-1 rounded-xl shadow-inner w-full sm:w-auto">
           <button onClick={() => setActiveTab("overview")} className={`flex items-center gap-2 px-6 py-2 rounded-lg transition-all ${activeTab === "overview" ? "bg-white shadow-md text-amber-600" : "text-gray-500 hover:text-gray-700"}`}>
             <LayoutDashboard className="w-4 h-4" /> Overview
           </button>
@@ -204,7 +204,7 @@ export function AdminPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         <StatCard title="Total Orders" value={totalOrders} icon={<ShoppingCart className="text-amber-600" />} />
         <StatCard title="Total Revenue" value={`$${totalRevenue.toFixed(2)}`} icon={<DollarSign className="text-green-600" />} />
         <StatCard title="Cookies Sold" value={totalCookies} icon={<TrendingUp className="text-blue-600" />} />
@@ -213,7 +213,7 @@ export function AdminPage() {
 
       {activeTab === "overview" ? (
         <div className="space-y-8 animate-in fade-in duration-500">
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <ChartCard title="Orders by Date">
               <LineChart data={ordersByDate}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -230,7 +230,7 @@ export function AdminPage() {
             </ChartCard>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <ChartCard title="Cookie Types Sold">
               <PieChart>
                 <Pie data={cookieTypeData} cx="50%" cy="50%" outerRadius={80} dataKey="count" label={({ name }) => name}>
@@ -241,7 +241,7 @@ export function AdminPage() {
             </ChartCard>
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl mb-4 font-semibold text-gray-800">Flavors to Make This Week</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {flavorData.slice(0, 4).map((f: any) => (
                   <div key={f.flavor} className="bg-amber-50 p-4 rounded-lg text-center border border-amber-100">
                     <p className="text-sm capitalize text-gray-600">{f.flavor}</p>
