@@ -174,16 +174,36 @@ export function AdminPage() {
   startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
   const thisWeekOrders = orders.filter(o => o.createdAt >= startOfWeek);
 
-  const flavorData = thisWeekOrders.reduce((acc, order) => {
-    order.items.forEach(item => {
-      if (item.flavor) {
-        const existing = acc.find((f: any) => f.flavor.toLowerCase() === item.flavor!.toLowerCase());
-        if (existing) existing.count += item.quantity;
-        else acc.push({ flavor: item.flavor, count: item.quantity });
-      }
-    });
-    return acc;
-  }, [] as any[]).sort((a, b) => b.count - a.count);
+  //  โค้ดใหม่ที่รองรับทั้งรสชาติเดี่ยว (String) และหลายรสชาติ (Array)
+const flavorData = thisWeekOrders.reduce((acc, order) => {
+  order.items.forEach(item => {
+    if (item.flavor) {
+      // 1. แปลงข้อมูลให้เป็น Array เสมอ (ถ้าเป็น String ก็จับยัดใส่ตระกร้า Array ซะ)
+      const flavorsArray = Array.isArray(item.flavor) 
+        ? item.flavor 
+        : [item.flavor];
+
+      // 2. วนลูปนับแยกทีละรสชาติใน Array น้ันๆ
+      flavorsArray.forEach((singleFlavor: string) => {
+        if (!singleFlavor) return;
+        
+        const cleanFlavor = singleFlavor.trim();
+        
+        // หาดูว่าเคยเจอรสชาตินี้ในตัวสะสม (acc) หรือยัง
+        const existing = acc.find(
+          (f: any) => typeof f.flavor === "string" && f.flavor.toLowerCase() === cleanFlavor.toLowerCase()
+        );
+
+        if (existing) {
+          existing.count += item.quantity;
+        } else {
+          acc.push({ flavor: cleanFlavor, count: item.quantity });
+        }
+      });
+    }
+  });
+  return acc;
+}, [] as any[]).sort((a, b) => b.count - a.count);
 
   if (loading) return <div className="max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">Loading Data...</div>;
   if (error) return <div className="max-w-7xl mx-auto px-4 py-12 text-red-600">Error: {error}</div>;

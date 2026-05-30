@@ -13,18 +13,37 @@ export function CustomCookiePage() {
   const [dbToppings, setDbToppings] = useState<string[]>([]);
 
   const [texture, setTexture] = useState<string>("");
-  const [selectedFlavor, setSelectedFlavor] = useState<string>("");
+  const [selectedFlavor, setSelectedFlavor] = useState<string[]>([]);
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
 
   const handleSelectFlavor = (flavor: string) => {
-    setSelectedFlavor(flavor);
-  };
+  setSelectedFlavor((prev) => {
+    // If the same flavor is clicked again, deselect it
+    if (prev.includes(flavor)) {
+      return prev.filter((f) => f !== flavor);
+    }
+    // Otherwise, select the new flavor (only one can be selected)
+    if (prev.length === 2 ) {
+      toast.error("You can only select one flavor");
+      return prev; // Don't change selection if already 2 flavors are selected
+    }
+    // Select the new flavor
+    return [...prev,flavor];
+  });
+};
 
   const toggleTopping = (topping: string) => {
     setSelectedToppings((prev) =>
-      prev.includes(topping)
-        ? prev.filter((t) => t !== topping)
-        : [...prev, topping]
+    {
+      if (prev.includes(topping)) {
+        return prev.filter((t) => t !== topping);
+      }
+      if(prev.length === 3) {
+        toast.error("You can only select 3 toppings");
+        return prev; // Don't change selection if already 4 toppings are selected
+      }
+      return [...prev, topping]; // Select the new topping
+    }
     );
   };
 
@@ -83,7 +102,7 @@ export function CustomCookiePage() {
       toast.success("Added Custom Set to cart!");
 
       // clear selection after adding to cart
-      setSelectedFlavor("");
+      setSelectedFlavor([]);
       setSelectedToppings([]);
       navigate("/cart");
     }
@@ -131,14 +150,16 @@ export function CustomCookiePage() {
 
         {/* Flavor Selection */}
         <div className="mb-8">
-          <h2 className="text-2xl mb-2 font-semibold text-gray-800">Flavor</h2>
-          <p className="text-xs text-gray-400 mb-4">please select one flavor</p>
+          <h2 className="text-2xl mb-2 font-semibold text-gray-800">Flavor</h2> 
+          <p className="text-sm text-gray-500 mb-4">
+            (you can select 2 flavors, you will get 5 cookies of each flavor!!!)
+          </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {dbFlavors.map((flavor) => (
               <button
                 key={flavor}
                 onClick={() => handleSelectFlavor(flavor)}
-                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${selectedFlavor === flavor ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                className={`py-3 px-4 rounded-lg border-2 font-medium transition-all capitalize ${selectedFlavor.includes(flavor) ? "border-amber-600 bg-amber-50 text-amber-600 shadow-sm" : "border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
               >
                 {flavor}
@@ -150,6 +171,9 @@ export function CustomCookiePage() {
         {/* Topping Selection */}
         <div>
           <h2 className="text-2xl mb-4 font-semibold text-gray-800">Toppings</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            (2 toppings are free, 3 topping add 10฿)
+          </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {dbToppings.map((topping) => (
               <button
@@ -163,7 +187,7 @@ export function CustomCookiePage() {
             ))}
           </div>
         </div>
-      </div>
+      </div>  
 
       {/* submit button */}
       <div className="bg-white rounded-lg shadow-md p-6">

@@ -408,7 +408,7 @@ export function UserProfilePage() {
                           {(item.texture || item.flavor || item.toppings) && (
                             <div className="text-xs text-gray-500 mt-1 pl-3 space-y-0.5">
                               {item.texture && <p>• Texture: {item.texture}</p>}
-                              {item.flavor && <p>• Flavor: {item.flavor}</p>}
+                              {item.flavor && <p>• Flavor: {Array.isArray(item.flavor) ? item.flavor.join(', ') : item.flavor}</p>}
                               {item.toppings && (
                                 <p>• Toppings: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</p>
                               )}
