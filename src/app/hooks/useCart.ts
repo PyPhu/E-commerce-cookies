@@ -39,6 +39,14 @@ export function useCart() {
   const addToCart = async (item: MenuItem) => {
     let updatedQuantity = 1;
 
+    // 🌟 1. ดักคำนวณราคาคุกกี้คัสตอม (ถ้าเลือกท็อปปิ้ง 3 ชิ้น ปรับราคาเป็น 409 บาท)
+    let finalPrice = item.price;
+    const isCustom = item.id.includes('custom') || item.type === 'custom' || item.name.toLowerCase().includes('custom');
+    
+    if (isCustom) {
+      finalPrice = item.toppings && item.toppings.length === 3 ? 409 : 399;
+    }
+
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(i => i.id === item.id);
       
@@ -49,12 +57,16 @@ export function useCart() {
         console.log(`📦 ${item.name}: ${existingItem.quantity} → ${updatedQuantity}`);
         
         const newCart = [...prevCart];
-        newCart[existingItemIndex] = { ...existingItem, quantity: updatedQuantity };
+        newCart[existingItemIndex] = { 
+          ...existingItem, 
+          price: finalPrice, // 🌟 ใช้ราคาที่คำนวณใหม่
+          quantity: updatedQuantity 
+        };
         return newCart;
       } else {
         updatedQuantity = 1;
         console.log(`✨ Adding new: ${item.name}`);
-        return [...prevCart, { ...item, quantity: 1 }];
+        return [...prevCart, { ...item, price: finalPrice, quantity: 1 }]; // 🌟 ใช้ราคาที่คำนวณใหม่
       }
     });
 
@@ -66,11 +78,12 @@ export function useCart() {
           customer_id: customerId,
           product_id: item.id,
           name: item.name,
-          price: item.price,
+          price: finalPrice, 
           quantity: updatedQuantity,
           texture: item.texture || '',
-          flavor: item.flavor || '',
-          toppings: item.toppings || []                  // ✅ Add toppings field
+          // ป้องกันพัง: เช็คว่าถ้าเป็น Array ให้ส่งไปตรงๆ (ตามโครงสร้าง _text ในภาพ DB ของคุณ)
+          flavor: Array.isArray(item.flavor) ? item.flavor : (item.flavor ? [item.flavor] : []),
+          toppings: item.toppings || []
         }, { onConflict: 'customer_id, product_id' });
 
       if (error) {
