@@ -11,10 +11,11 @@ import { AdminOnly } from "./components/AdminOnly";
 import { SuccessPage } from "./pages/user/SuccessPage";
 import { MessageBoardPage } from "./pages/user/MessageBoardPage";
 import { CancelPage } from "./pages/user/CancelPage";
-import { LoginPage } from "./pages/user/LoginPage";
+import { LoginPage } from "./pages/user/Register/LoginPage";
 import { ForgotPasswordPage } from "./pages/user/Register/ForgetpassPage";
 import { AuthProvider } from "./components/AdminAuth";
 import { AdminProducts } from "./pages/admin/AdminProducts";
+import { ResetPasswordPage } from "./pages/user/Register/ResetPasswordPage";
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
   },
   { path: 'login', element: <LoginPage /> },
   { path: "forgot-password", element: <ForgotPasswordPage /> },
+  { path: "reset-password", element: <ResetPasswordPage /> },
   //admin
   {
     path: '/admin',
