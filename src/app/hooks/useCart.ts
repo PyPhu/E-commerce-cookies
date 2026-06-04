@@ -28,9 +28,37 @@ export function useCart() {
     return stored ? JSON.parse(stored) : [];
   });
 
+  const [shippingRates, setShippingRates] = useState({ standard: 40, bulk: 50 });
+
+  //จัดการ Sync ตะกร้าสินค้าลง LocalStorage
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
+
+  // ดึงราคาค่าส่งจากฐานข้อมูลตอนที่ Component ถูกโหลดขึ้นมา (หรือจะเพิ่มปุ่มรีเฟรชก็ได้)
+  useEffect(() => {
+    const fetchShippingRates = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('item, price')
+          // ค้นหาแถวที่มีชื่อตามวิธีที่ 1 (อย่าลืมตั้งชื่อใน DB ให้ตรงกันนะครับ)
+          .or('item.eq.Shipping Standard (<=10),item.eq.Shipping Bulk (>10)');
+
+        if (data && !error) {
+          const standardRate = data.find(p => p.item.includes('Standard'))?.price || 40;
+          const bulkRate = data.find(p => p.item.includes('Bulk'))?.price || 50;
+
+          setShippingRates({ standard: standardRate, bulk: bulkRate });
+          console.log("🚚 Fetched shipping rates from DB:", { standard: standardRate, bulk: bulkRate });
+        }
+      } catch (err) {
+        console.error("❌ Failed to fetch shipping rates:", err);
+      }
+    };
+
+    fetchShippingRates();
+  }, []);
 
   const syncSetCart = useCallback((newCart: CartItem[]) => {
     setCart(newCart);
@@ -39,34 +67,33 @@ export function useCart() {
   const addToCart = async (item: MenuItem) => {
     let updatedQuantity = 1;
 
-    // 🌟 1. ดักคำนวณราคาคุกกี้คัสตอม (ถ้าเลือกท็อปปิ้ง 3 ชิ้น ปรับราคาเป็น 409 บาท)
     let finalPrice = item.price;
     const isCustom = item.id.includes('custom') || item.type === 'custom' || item.name.toLowerCase().includes('custom');
-    
+
     if (isCustom) {
       finalPrice = item.toppings && item.toppings.length === 3 ? 409 : 399;
     }
 
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(i => i.id === item.id);
-      
+
       if (existingItemIndex !== -1) {
         const existingItem = prevCart[existingItemIndex];
         updatedQuantity = existingItem.quantity + 1;
-        
+
         console.log(`📦 ${item.name}: ${existingItem.quantity} → ${updatedQuantity}`);
-        
+
         const newCart = [...prevCart];
-        newCart[existingItemIndex] = { 
-          ...existingItem, 
-          price: finalPrice, // 🌟 ใช้ราคาที่คำนวณใหม่
-          quantity: updatedQuantity 
+        newCart[existingItemIndex] = {
+          ...existingItem,
+          price: finalPrice,
+          quantity: updatedQuantity
         };
         return newCart;
       } else {
         updatedQuantity = 1;
         console.log(`✨ Adding new: ${item.name}`);
-        return [...prevCart, { ...item, price: finalPrice, quantity: 1 }]; // 🌟 ใช้ราคาที่คำนวณใหม่
+        return [...prevCart, { ...item, price: finalPrice, quantity: 1 }];
       }
     });
 
@@ -78,10 +105,9 @@ export function useCart() {
           customer_id: customerId,
           product_id: item.id,
           name: item.name,
-          price: finalPrice, 
+          price: finalPrice,
           quantity: updatedQuantity,
           texture: item.texture || '',
-          // ป้องกันพัง: เช็คว่าถ้าเป็น Array ให้ส่งไปตรงๆ (ตามโครงสร้าง _text ในภาพ DB ของคุณ)
           flavor: Array.isArray(item.flavor) ? item.flavor : (item.flavor ? [item.flavor] : []),
           toppings: item.toppings || []
         }, { onConflict: 'customer_id, product_id' });
@@ -112,7 +138,7 @@ export function useCart() {
       removeFromCart(itemId);
       return;
     }
-    
+
     setCart(prevCart =>
       prevCart.map(item =>
         item.id === itemId ? { ...item, quantity } : item
@@ -142,7 +168,18 @@ export function useCart() {
   };
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // กรองคัดนับเฉพาะจำนวนชิ้นคุกกี้หลัก (ไม่นับแถวที่เป็น Toppings แยก เพื่อไม่ให้ค่าส่งคำนวณพลาด)
+  const cookieOnlyItems = cart
+    .filter(item => !item.name.toLowerCase().includes('topping'))
+    .reduce((sum, item) => sum + item.quantity, 0);
+
+  // 🌟 ดึงราคาจาก state `shippingRates` มาใช้แทนเลขเดิม
+  const shippingFee = cookieOnlyItems === 0
+    ? 0
+    : (cookieOnlyItems > 10 ? shippingRates.bulk : shippingRates.standard);
+
+  const grandTotal = totalPrice + shippingFee;
 
   return {
     cart,
@@ -152,6 +189,8 @@ export function useCart() {
     updateQuantity,
     clearCart,
     totalPrice,
-    totalItems,
+    totalItems: cookieOnlyItems,
+    shippingFee,
+    grandTotal
   };
 }

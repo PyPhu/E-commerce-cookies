@@ -8,7 +8,7 @@ import { supabase } from "../../../../backend/supabaseClient";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, totalPrice } = useCart();
+  const { cart, totalPrice, shippingFee } = useCart();
 
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
     const stored = localStorage.getItem('cookie-shop-user');
@@ -53,7 +53,6 @@ export function CheckoutPage() {
 
   const handleCheckout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-
     if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
       toast.error("Please fill in all required fields");
       return;
@@ -62,13 +61,15 @@ export function CheckoutPage() {
     localStorage.setItem('cookie-shop-user', JSON.stringify(userInfo));
 
     try {
-      // ✅ Get session token instead of anon key
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Session expired, please sign in again");
-        navigate("/login", { state : {from: "/checkout"} });
+        navigate("/login", { state: { from: "/checkout" } });
         return;
       }
+
+      // 🌟 2. คำนวณยอดสุทธิรวมค่าส่งตรงนี้เพื่อส่งไปหลังบ้าน
+      const grandTotal = totalPrice + shippingFee;
 
       const res = await fetch(
         "https://uyfprvwjgurtvkpwkzdo.supabase.co/functions/v1/create-checkout-session",
@@ -76,15 +77,19 @@ export function CheckoutPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // ✅ Use session.access_token NOT anon key
             "Authorization": `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ cart, userInfo }),
+          // 🌟 3. แนบค่าส่ง และ ยอดรวมสุทธิ ส่งไปให้ Edge Function
+          body: JSON.stringify({
+            cart,
+            userInfo,
+            shippingFee,
+            grandTotal
+          }),
         }
       );
 
       const data = await res.json();
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -164,21 +169,33 @@ export function CheckoutPage() {
         {/* ฝั่งสรุปคำสั่งซื้อ */}
         <div className="bg-white rounded-lg shadow-md p-6 h-fit">
           <h2 className="text-2xl mb-6">Order Summary</h2>
-          <div className="space-y-4 mb-6">
+          <div className="space-y-4 mb-4">
             {cart.map((item) => (
-              <div key={item.id} className="flex justify-between">
+              <div key={item.id} className="flex justify-between text-sm">
                 <div>
-                  <p className="mb-1 font-medium">{item.name}</p>
-                  <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                  <p className="font-medium text-gray-800">{item.name}</p>
+                  <p className="text-xs text-gray-500">Quantity: {item.quantity}</p>
                 </div>
-                <span>฿{(item.price * item.quantity).toFixed(2)}</span>
+                <span className="text-gray-700">฿{(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
+          {/* เพิ่มรายละเอียดแยกค่าจัดส่งให้ชัดเจน */}
+          <div className="border-t pt-3 space-y-1.5 text-sm text-gray-600 mb-4">
+            <div className="flex justify-between">
+              <span>Product Price:</span>
+              <span>฿{totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Shipping Fee:</span>
+              <span>฿{shippingFee.toFixed(2)}</span>
+            </div>
+          </div>
+
           <div className="border-t pt-4">
             <div className="flex justify-between text-xl font-bold">
               <span>Total</span>
-              <span className="text-amber-600">฿{totalPrice.toFixed(2)}</span>
+              <span className="text-amber-600">฿{(totalPrice + shippingFee).toFixed(2)}</span>
             </div>
           </div>
         </div>

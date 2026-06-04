@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Cookie, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { Order } from "../../types";
-import { OrderDetailsModal } from "./OrderDetailsModal"; // 🌟 ดึงไฟล์ Modal เข้ามาใช้ที่นี่
+import { OrderDetailsModal } from "./OrderDetailsModal";
 
 interface AdminTablesProps {
   orders: Order[];
@@ -64,7 +64,6 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
           let totalPieces = 0;
           if (orders && orders.length > 0) {
             orders.forEach(order => {
-              // คัดกรอง: ถ้าจัดส่งสำเร็จ (completed) แล้ว จะไม่นำมานับคำนวณบนหน้าการ์ด
               if (order.status === "completed") return;
 
               order.items.forEach(item => {
@@ -92,13 +91,13 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
         })}
       </div>
 
-      {/* 🌟 หน้าต่างดึงรายละเอียดและสลับสถานะออเดอร์ */}
+      {/* หน้าต่างดึงรายละเอียดและสลับสถานะออเดอร์ */}
       <OrderDetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         cardName={selectedCardName}
         filteredOrders={filteredOrders}
-        setFilteredOrders={setFilteredOrders} // เก็บตัวนี้ไว้พอ
+        setFilteredOrders={setFilteredOrders}
       />
 
       {/* ส่วนที่ 2: ตาราง Orders */}
@@ -117,36 +116,62 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
               </tr>
             </thead>
             <tbody>
-              {currentOrders.map((order) => (
-                <tr key={order.id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-4 text-sm font-mono text-gray-600">#{order.id}</td>
-                  <td className="py-4 px-4">
-                    <div className="font-semibold text-gray-800">{order.user.name}</div>
-                    <div className="text-xs text-gray-500">{order.user.email}</div>
-                  </td>
-                  <td className="py-4 px-4 text-sm text-gray-600">
-                    {order.items.map((item: any, idx) => (
-                      <div key={idx} className="mb-0.5">
-                        <span className="font-medium text-amber-800">{item.quantity}x</span> {item.displayName || item.name}
+              {currentOrders.map((order) => {
+                // 🌟 1. ถอดสูตรนับจำนวนชิ้นคุกกี้หลัก (ไม่รวม Topping แยก) เพื่อใช้คำนวณค่าส่งย้อนกลับ
+                const cookiePieces = order.items?.reduce((sum: number, item: any) => {
+                  const isTopping = item.name?.toLowerCase().includes('topping');
+                  return isTopping ? sum : sum + (item.quantity || 0);
+                }, 0) || 0;
+
+                // 🌟 2. คำนวณค่าส่งย้อนกลับตามเงื่อนไข (ไม่เกิน 10 ชิ้นคิด 40 | เกิน 10 ชิ้นคิด 50)
+                const calculatedShipping = cookiePieces === 0 ? 0 : (cookiePieces > 10 ? 50 : 40);
+
+                // 🌟 3. เรียกยอดเงินจริงจากคอลัมน์ price_paid ใน Supabase (ถ้าไม่มีให้ fallback ไปที่ order.total)
+                const displayTotal = (order as any).price_paid || order.total || 0;
+
+                return (
+                  <tr key={order.id} className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-4 text-sm font-mono text-gray-600">#{order.id}</td>
+                    
+                    {/* 🌟 4. ใส่ Optional Chaining (?.) กันข้อมูลลูกค้าพัง */}
+                    <td className="py-4 px-4">
+                      <div className="font-semibold text-gray-800">{order.user?.name || "Unknown Customer"}</div>
+                      <div className="text-xs text-gray-500">{order.user?.email || "No Email"}</div>
+                    </td>
+                    
+                    <td className="py-4 px-4 text-sm text-gray-600">
+                      {order.items.map((item: any, idx) => (
+                        <div key={idx} className="mb-0.5">
+                          <span className="font-medium text-amber-800">{item.quantity}x</span> {item.displayName || item.name}
+                        </div>
+                      ))}
+                    </td>
+
+                    {/* 🌟 5. แสดงยอดเงินสุทธิจากราวจ่ายจริงคู่กับแจงรายละเอียดค่าส่ง */}
+                    <td className="py-4 px-4">
+                      <div className="font-bold text-amber-700">฿{Number(displayTotal).toFixed(2)}</div>
+                      <div className="text-[10px] text-gray-400 font-normal leading-tight">
+                        (ค่าส่ง ฿{calculatedShipping})
                       </div>
-                    ))}
-                  </td>
-                  <td className="py-4 px-4 font-bold text-amber-700">฿{order.total.toFixed(2)}</td>
-                  <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${order.status === "completed" ? "bg-green-100 text-green-700" :
-                      order.status === "preparing" ? "bg-blue-100 text-blue-700" :
-                        "bg-amber-100 text-amber-700" // สำหรับสถานะ paid
+                    </td>
+
+                    <td className="py-4 px-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                        order.status === "completed" ? "bg-green-100 text-green-700" :
+                        order.status === "preparing" ? "bg-blue-100 text-blue-700" :
+                        "bg-amber-100 text-amber-700"
                       }`}>
-                      {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <button onClick={() => handleOpenSingleOrderModal(order)} className="p-2 hover:bg-amber-50 rounded-full text-amber-600 transition-colors">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                        {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <button onClick={() => handleOpenSingleOrderModal(order)} className="p-2 hover:bg-amber-50 rounded-full text-amber-600 transition-colors">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {orders.length === 0 && <div className="text-center py-10 text-gray-400">No orders found.</div>}
@@ -163,7 +188,7 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="text-sm font-medium text-gray-700">Page {currentPage} of {totalPages}</div>
-              <button onClick={() => setCurrentPage((prev) => Math.max(prev + 1, totalPages))} disabled={currentPage === totalPages} className="flex items-center justify-center p-2 rounded-lg border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+              <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="flex items-center justify-center p-2 rounded-lg border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
