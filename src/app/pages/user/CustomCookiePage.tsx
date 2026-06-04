@@ -199,7 +199,7 @@ export function CustomCookiePage() {
               {selectedToppings.length > 0 && ` • Toppings: ${selectedToppings.join(", ")}`}
             </p>
           </div>
-          <span className="text-2xl text-amber-600 font-bold">฿399.00</span>
+          <span className="text-2xl text-amber-600 font-bold">{selectedToppings.length > 2 ? `฿${(399 + (selectedToppings.length - 2) * 10).toFixed(2)}` : "฿399.00"}</span>
         </div>
         <button
           onClick={handleAddToCart}
