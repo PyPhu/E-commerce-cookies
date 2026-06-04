@@ -62,7 +62,7 @@ export function UserProfilePage() {
         // pull order 
         const { data: ordersData, error: ordersError, count } = await supabase
           .from('orders')
-          .select('id, created_at, status', { count: 'exact' }) // ขอ count มาด้วยเลย
+          .select('id, created_at, status, tracking_number', { count: 'exact' }) // ขอ count มาด้วยเลย
           .eq('customer_id', customerId)
           .order('created_at', { ascending: false })
           .range(from, to);
@@ -379,6 +379,9 @@ export function UserProfilePage() {
                         <p className="text-sm text-gray-500">
                           {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
                         </p>
+                        {order.tracking_number && (
+                          <p className="text-sm text-gray-500 mt-1">Tracking Number: {order.tracking_number}</p>
+                        )}
                       </div>
 
                       {/* 🌟 ปรับปรุงส่วนการเช็คสเตตัสและจับคู่สีสันให้ตรงกับฝั่งแอดมิน */}

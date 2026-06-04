@@ -2,6 +2,7 @@ import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck } from "lucide-reac
 import { Order } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 import { toast } from "sonner";
+import React from "react";
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -40,6 +41,30 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
     } catch (err: any) {
       console.error(err);
       toast.error("ไม่สามารถเปลี่ยนสเตตัสได้: " + err.message);
+    }
+  };
+
+  const [trackingNumber, setTrackingNumber] = React.useState(filteredOrders[0]?.trackingNumber || "");
+
+  const handleTrackingNumberChange = async (orderId: string, newTrackingNumber: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ tracking_number: newTrackingNumber })
+        .eq("id", parseInt(orderId));
+
+      if (error) throw error;
+
+      toast.success(`อัปเดตหมายเลขติดตามออเดอร์ #${orderId} เรียบร้อยแล้ว`);
+
+      // อัปเดต UI สำหรับการแสดงหมายเลขติดตาม
+      setFilteredOrders(prev =>
+        prev.map(order => order.id === orderId ? { ...order, trackingNumber: newTrackingNumber } : order)
+      );
+
+    } catch (err: any) {
+      console.error(err);
+      toast.error("ไม่สามารถอัปเดตหมายเลขติดตามได้: " + err.message);
     }
   };
 
@@ -121,7 +146,14 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                       <MapPin className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                       <div className="text-xs leading-relaxed">{order.user.address || "No address available"}</div>
                     </div>
-                  </div>
+                      <div className="flex items-center gap-1 text-gray-500"><Hash className="w-3 h-3" /> Tracking Number</div>
+                    <div className="p-2 rounded-lg border text-sm bg-gray-50 border-gray-100">
+                        <input type="text" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="w-full bg-transparent text-gray-500 text-xs font-mono" placeholder="Tracking number not available" />
+                      </div>
+                        <button onClick={() => handleTrackingNumberChange(order.id, trackingNumber)} className="mt-1 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors">
+                          Update
+                        </button>
+                </div>
 
                   {/* รายการสินค้าในบิล */}
                   <div className="flex flex-col justify-between">

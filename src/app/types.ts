@@ -27,6 +27,7 @@ export interface Order {
   total: number;
   status: 'pending' | 'preparing' | 'ready' | 'completed';
   createdAt: Date;
+  trackingNumber?: string;
 }
 
 export interface Product {
