@@ -62,7 +62,7 @@ export function UserProfilePage() {
         // pull order 
         const { data: ordersData, error: ordersError, count } = await supabase
           .from('orders')
-          .select('id, created_at, status, tracking_number', { count: 'exact' }) // ขอ count มาด้วยเลย
+          .select('id, created_at, status, tracking_number, price_paid, shipping_price', { count: 'exact' }) // ขอ count มาด้วยเลย
           .eq('customer_id', customerId)
           .order('created_at', { ascending: false })
           .range(from, to);
@@ -417,8 +417,18 @@ export function UserProfilePage() {
                               )}
                             </div>
                           )}
-                        </div>
+                        </div> 
                       ))}
+                      <div className="border-t pt-2 mt-2 flex justify-start gap-4 text-sm">
+                        <span>Shipping fee:</span>
+                        <span className="text-amber-800">
+                          ฿{order.shipping_price ?? 0 }
+                        </span>
+                        <span>Total Paid:</span>
+                        <span className="text-amber-800">
+                          ฿{order.price_paid ?? 0}
+                        </span>
+                      </div>
                     </div>
 
                   </div>
