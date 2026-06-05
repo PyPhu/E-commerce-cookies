@@ -96,7 +96,7 @@ export function CustomCookiePage() {
         texture: texture,
         flavor: selectedFlavor,
         toppings: selectedToppings,
-        cardNote: cardNote
+        custom_message: cardNote
 
       };
       // send to usecart function

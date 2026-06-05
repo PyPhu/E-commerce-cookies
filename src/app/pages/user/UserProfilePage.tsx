@@ -86,7 +86,7 @@ export function UserProfilePage() {
         // pull order_items 
         const { data: itemsData, error: itemsError } = await supabase
           .from('order_items')
-          .select('id, order_id, texture, flavor, toppings, quantity, name, price, custom_note')
+          .select('id, order_id, texture, flavor, toppings, quantity, name, price, custom_message')
           .in('order_id', orderIds); // ค้นหาไอเทมทั้งหมดที่อยู่ในรายการออเดอร์ชุดนี้
 
         if (itemsError) throw itemsError;
@@ -415,8 +415,8 @@ export function UserProfilePage() {
                               {item.toppings && (
                                 <p>• Toppings: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</p>
                               )}
-                              {item.custom_note && (
-                                <p>• Note: {item.custom_note}</p>
+                              {item.custom_message && (
+                                <p className="text-pretty break-words whitespace-pre-wrap">• Note: {item.custom_message}</p>
                                )}
                             </div>
                           )}
