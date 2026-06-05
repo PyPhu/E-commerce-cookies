@@ -3,13 +3,14 @@ export interface MenuItem {
   name: string;
   type: 'menu' | 'custom';
   price: number;
-  texture?: 'hard' | 'soft';
-  flavor?: string;
+  texture?: string;
+  flavor?: string[];
   toppings?: string[];
 }
 
 export interface CartItem extends MenuItem {
   quantity: number;
+  custom_message?: string;
 }
 
 export interface UserInfo {

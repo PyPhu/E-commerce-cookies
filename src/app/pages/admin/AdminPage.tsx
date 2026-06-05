@@ -26,10 +26,11 @@ type OrderRow = {
   order_items: Array<{
     id: number;
     name: string | null; // ดึงฟิลด์ name ตามโครงสร้างจริงใน Schema ของคุณ
+    flavor: string[] | null;
     texture: string | null;
-    flavor: string | null;
     toppings: string[] | null;
     quantity: number;
+    custom_message: string | null;
   }>;
 };
 
@@ -58,8 +59,11 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
         displayName: displayName,
         type: rawName.toLowerCase().includes("custom") ? ("custom" as const) : ("menu" as const),
         price: unitPrice,
-        flavor: item.flavor ?? '',
+        flavor: item.flavor ?? [],
+        texture: item.texture ?? '',
+        toppings: item.toppings ?? [],
         quantity: item.quantity ?? 0,
+        custom_message: (item as any).custom_message ?? '' 
       };
     });
 
@@ -109,7 +113,8 @@ export function AdminPage() {
             texture,
             flavor, 
             toppings, 
-            quantity
+            quantity,
+            custom_message
           )
         `)
         .order("created_at", { ascending: false });
