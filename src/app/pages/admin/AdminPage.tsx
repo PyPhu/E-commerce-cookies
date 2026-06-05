@@ -31,6 +31,7 @@ type OrderRow = {
     texture: string | null;
     toppings: string[] | null;
     quantity: number;
+    price: number;
     custom_message: string | null;
   }>;
 };
@@ -47,7 +48,6 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
       // ดึงค่า name จากตาราง order_items โดยตรง หากไม่มี (เป็นค่าว่าง) ให้มองเป็น Custom Cookie
       const rawName = item.name ? item.name.trim() : "Custom Cookie";
       
-      const unitPrice = totalQuantityInOrder > 0 ? totalPricePaid / totalQuantityInOrder : 0;
       const toppingsList = item.toppings ?? [];
       
       // จัดรูปแบบชื่อที่จะนำไปแสดงในตารางให้สวยงาม (เช่น Crisp Triple Chocolate)
@@ -59,7 +59,7 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
         name: rawName, // ใช้ชื่อดิบนี้เป็น Key ในการดึงสถิติไปจับคู่ (Match)
         displayName: displayName,
         type: rawName.toLowerCase().includes("custom") ? ("custom" as const) : ("menu" as const),
-        price: unitPrice,
+        price: item.price ?? 0,
         flavor: item.flavor ?? [],
         texture: item.texture ?? '',
         toppings: item.toppings ?? [],
