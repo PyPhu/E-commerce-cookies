@@ -405,7 +405,7 @@ export function UserProfilePage() {
                             <span className="font-semibold text-amber-800">
                               {item.quantity}x {item.name}
                             </span>
-                            <p className="font-semibold text-amber-800">{item.price}</p>
+                            <p className="font-semibold text-amber-800">{item.price * item.quantity}</p>
                           </div>
 
                           {(item.texture || item.flavor || item.toppings) && (
