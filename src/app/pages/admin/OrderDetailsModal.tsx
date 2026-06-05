@@ -186,6 +186,10 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-bold">
+                      <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" />Shipping Fee:</div>
+                      <span className="text-base text-amber-700">฿{order.shippingPrice!.toFixed(2)}</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-bold">
                       <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" /> Total Amount:</div>
                       <span className="text-base text-amber-700">฿{order.total.toFixed(2)}</span>
                     </div>

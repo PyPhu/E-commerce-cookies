@@ -29,6 +29,7 @@ export interface Order {
   status: 'pending' | 'preparing' | 'ready' | 'completed';
   createdAt: Date;
   trackingNumber?: string;
+  shippingPrice?: number;
 }
 
 export interface Product {

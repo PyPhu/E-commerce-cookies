@@ -23,6 +23,7 @@ type OrderRow = {
   price_paid: number;
   customers: any;
   tracking_number?: string;
+  shipping_price?: number;
   order_items: Array<{
     id: number;
     name: string | null; // ดึงฟิลด์ name ตามโครงสร้างจริงใน Schema ของคุณ
@@ -81,6 +82,7 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
       status: (row.status || "pending") as Order["status"],
       createdAt: new Date(row.created_at),
       trackingNumber: row.tracking_number,
+      shippingPrice: row.shipping_price ?? 0,
     };
   });
 }
@@ -107,6 +109,7 @@ export function AdminPage() {
           price_paid,
           customers (name, email, phone, address), 
           tracking_number,
+          shipping_price,
           order_items (
             id, 
             name,
