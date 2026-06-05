@@ -16,29 +16,30 @@ export function CustomCookiePage() {
   const [selectedFlavor, setSelectedFlavor] = useState<string[]>([]);
   const [selectedToppings, setSelectedToppings] = useState<string[]>([]);
 
+  const [cardNote, setCardNote] = useState<string>("");
+
   const handleSelectFlavor = (flavor: string) => {
-  setSelectedFlavor((prev) => {
-    // If the same flavor is clicked again, deselect it
-    if (prev.includes(flavor)) {
-      return prev.filter((f) => f !== flavor);
-    }
-    // Otherwise, select the new flavor (only one can be selected)
-    if (prev.length === 2 ) {
-      toast.error("You can only select one flavor");
-      return prev; // Don't change selection if already 2 flavors are selected
-    }
-    // Select the new flavor
-    return [...prev,flavor];
-  });
-};
+    setSelectedFlavor((prev) => {
+      // If the same flavor is clicked again, deselect it
+      if (prev.includes(flavor)) {
+        return prev.filter((f) => f !== flavor);
+      }
+      // Otherwise, select the new flavor (only one can be selected)
+      if (prev.length === 2) {
+        toast.error("You can only select one flavor");
+        return prev; // Don't change selection if already 2 flavors are selected
+      }
+      // Select the new flavor
+      return [...prev, flavor];
+    });
+  };
 
   const toggleTopping = (topping: string) => {
-    setSelectedToppings((prev) =>
-    {
+    setSelectedToppings((prev) => {
       if (prev.includes(topping)) {
         return prev.filter((t) => t !== topping);
       }
-      if(prev.length === 3) {
+      if (prev.length === 3) {
         toast.error("You can only select 3 toppings");
         return prev; // Don't change selection if already 4 toppings are selected
       }
@@ -84,7 +85,7 @@ export function CustomCookiePage() {
       return;
     }
 
-    try{
+    try {
       const uniqueId = `custom-${Date.now()}`;
 
       const customCookie = {
@@ -94,7 +95,8 @@ export function CustomCookiePage() {
         price: 399,
         texture: texture,
         flavor: selectedFlavor,
-        toppings: selectedToppings
+        toppings: selectedToppings,
+        cardNote: cardNote
 
       };
       // send to usecart function
@@ -104,10 +106,13 @@ export function CustomCookiePage() {
       // clear selection after adding to cart
       setSelectedFlavor([]);
       setSelectedToppings([]);
+      setCardNote("");
       navigate("/cart");
     }
-    catch(error){console.error("Error saving custom cookie:", error);
-      toast.error("Failed to add custom recipe to cart");}
+    catch (error) {
+      console.error("Error saving custom cookie:", error);
+      toast.error("Failed to add custom recipe to cart");
+    }
   };
 
   return (
@@ -150,7 +155,7 @@ export function CustomCookiePage() {
 
         {/* Flavor Selection */}
         <div className="mb-8">
-          <h2 className="text-2xl mb-2 font-semibold text-gray-800">Flavor</h2> 
+          <h2 className="text-2xl mb-2 font-semibold text-gray-800">Flavor</h2>
           <p className="text-sm text-gray-500 mb-4">
             (you can select 2 flavors, you will get 5 cookies of each flavor!!!)
           </p>
@@ -187,7 +192,31 @@ export function CustomCookiePage() {
             ))}
           </div>
         </div>
-      </div>  
+      </div>
+
+      {/* Custom Card Message */}
+      <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <h2 className="text-2xl font-semibold text-gray-800">Custom Card Message</h2>
+          <span className="text-sm text-gray-400">(Optional)</span>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          can write a special message for your loved ones! (max 200 characters)
+        </p>
+        <div className="relative">
+          <textarea
+            value={cardNote}
+            onChange={(e) => setCardNote(e.target.value)}
+            maxLength={200} // จำกัดตัวอักษรไว้ที่ 200 
+            rows={3}
+            placeholder="example: Happy birthday! May you have a wonderful day!"
+            className="w-full p-4 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-amber-600 transition-all text-gray-700 placeholder-gray-400 resize-none"
+          />
+          <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+            {cardNote.length}/200
+          </div>
+        </div>
+      </div>
 
       {/* submit button */}
       <div className="bg-white rounded-lg shadow-md p-6">
