@@ -416,7 +416,7 @@ export function UserProfilePage() {
                                 <p>• Toppings: {Array.isArray(item.toppings) ? item.toppings.join(', ') : item.toppings}</p>
                               )}
                               {item.custom_message && (
-                                <p className="text-pretty break-words whitespace-pre-wrap">• Note: {item.custom_message}</p>
+                                <p className="text-pretty break-words whitespace-pre-wrap w-[200px]">• Note: {item.custom_message}</p>
                                )}
                             </div>
                           )}
