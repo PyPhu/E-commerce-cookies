@@ -117,6 +117,7 @@ export function AdminPage() {
             flavor, 
             toppings, 
             quantity,
+            price,
             custom_message
           )
         `)
