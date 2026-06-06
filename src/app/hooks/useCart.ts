@@ -50,7 +50,6 @@ export function useCart() {
           const bulkRate = data.find(p => p.item.includes('Bulk'))?.price || 50;
 
           setShippingRates({ standard: standardRate, bulk: bulkRate });
-          console.log("🚚 Fetched shipping rates from DB:", { standard: standardRate, bulk: bulkRate });
         }
       } catch (err) {
         console.error("❌ Failed to fetch shipping rates:", err);
