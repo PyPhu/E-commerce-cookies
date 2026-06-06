@@ -87,7 +87,6 @@ export function LoginPage() {
           email: signupEmail,
           phone: signupPhone,
           address: signupAddress,
-          password: signupPassword,
         },
         { onConflict: "email" }
       );
