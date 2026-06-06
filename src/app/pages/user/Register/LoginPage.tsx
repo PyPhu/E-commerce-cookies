@@ -97,6 +97,7 @@ export function LoginPage() {
     }
 
     toast.success("Account created — welcome! 🎉");
+    navigate("/");
   };
 
   return (
@@ -227,7 +228,7 @@ export function LoginPage() {
                 <input type="password" placeholder="Min. 8 characters" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} style={inputStyle} onFocus={applyFocus} onBlur={removeFocus} />
               </Field>
 
-              <button onClick={handleSignup} style={submitStyle}>
+              <button onClick={handleSignup}  style={submitStyle}>
                 <UserPlus size={16} /> Create account
               </button>
 
