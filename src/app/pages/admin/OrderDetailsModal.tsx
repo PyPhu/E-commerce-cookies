@@ -148,7 +148,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                     </div>
                       <div className="flex items-center gap-1 text-gray-500"><Hash className="w-3 h-3" /> Tracking Number</div>
                     <div className="p-2 rounded-lg border text-sm bg-gray-50 border-gray-100">
-                        <input type="text" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="w-full bg-transparent text-gray-500 text-xs font-mono" placeholder="Tracking number not available" />
+                        <input type="text" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="w-full bg-transparent text-gray-500 text-xs font-mono" placeholder="No tracking number" />
                       </div>
                         <button onClick={() => handleTrackingNumberChange(order.id, trackingNumber)} className="mt-1 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors">
                           Update
@@ -169,9 +169,14 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                             {(item.texture || item.flavor || (item.toppings && item.toppings.length > 0)) && (
                               <div className="text-xs text-gray-400 mt-1 pl-5 border-l-2 border-dashed border-amber-300 ml-1 space-y-0.5">
                                 {item.texture && <div>• เนื้อคุกกี้: {item.texture}</div>}
-                                {item.flavor && <div>• รสชาติ: {item.flavor}</div>}
+                                {item.flavor && <div>• รสชาติ: {Array.isArray(item.flavor) ? item.flavor.join(", ") : item.flavor}</div>}
                                 {item.toppings && item.toppings.length > 0 && (
                                   <div>• ท็อปปิ้ง: {Array.isArray(item.toppings) ? item.toppings.join(", ") : item.toppings}</div>
+                                )}
+                                {item.custom_message && (
+                                  <div className="mt-1 p-2 bg-amber-50 border border-amber-200 text-amber-700 rounded text-pretty break-words whitespace-pre-wrap">
+                                    <span className="font-medium">Card Message: </span>{item.custom_message}
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -180,6 +185,10 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                       </div>
                     </div>
 
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-bold">
+                      <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" />Shipping Fee:</div>
+                      <span className="text-base text-amber-700">฿{order.shippingPrice!.toFixed(2)}</span>
+                    </div>
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-bold">
                       <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" /> Total Amount:</div>
                       <span className="text-base text-amber-700">฿{order.total.toFixed(2)}</span>

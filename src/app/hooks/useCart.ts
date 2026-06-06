@@ -63,7 +63,7 @@ export function useCart() {
     setCart(newCart);
   }, []);
 
-  const addToCart = async (item: MenuItem) => {
+  const addToCart = async (item: CartItem) => {
     let updatedQuantity = 1;
 
     let finalPrice = item.price;
@@ -108,7 +108,8 @@ export function useCart() {
           quantity: updatedQuantity,
           texture: item.texture || '',
           flavor: Array.isArray(item.flavor) ? item.flavor : (item.flavor ? [item.flavor] : []),
-          toppings: item.toppings || []
+          toppings: item.toppings || [],
+          custom_message: item.custom_message || ''
         }, { onConflict: 'customer_id, product_id' });
 
       if (error) {

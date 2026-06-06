@@ -23,13 +23,16 @@ type OrderRow = {
   price_paid: number;
   customers: any;
   tracking_number?: string;
+  shipping_price?: number;
   order_items: Array<{
     id: number;
     name: string | null; // ดึงฟิลด์ name ตามโครงสร้างจริงใน Schema ของคุณ
+    flavor: string[] | null;
     texture: string | null;
-    flavor: string | null;
     toppings: string[] | null;
     quantity: number;
+    price: number;
+    custom_message: string | null;
   }>;
 };
 
@@ -45,7 +48,6 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
       // ดึงค่า name จากตาราง order_items โดยตรง หากไม่มี (เป็นค่าว่าง) ให้มองเป็น Custom Cookie
       const rawName = item.name ? item.name.trim() : "Custom Cookie";
       
-      const unitPrice = totalQuantityInOrder > 0 ? totalPricePaid / totalQuantityInOrder : 0;
       const toppingsList = item.toppings ?? [];
       
       // จัดรูปแบบชื่อที่จะนำไปแสดงในตารางให้สวยงาม (เช่น Crisp Triple Chocolate)
@@ -57,9 +59,12 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
         name: rawName, // ใช้ชื่อดิบนี้เป็น Key ในการดึงสถิติไปจับคู่ (Match)
         displayName: displayName,
         type: rawName.toLowerCase().includes("custom") ? ("custom" as const) : ("menu" as const),
-        price: unitPrice,
-        flavor: item.flavor ?? '',
+        price: item.price ?? 0,
+        flavor: item.flavor ?? [],
+        texture: item.texture ?? '',
+        toppings: item.toppings ?? [],
         quantity: item.quantity ?? 0,
+        custom_message: (item as any).custom_message ?? '' 
       };
     });
 
@@ -77,6 +82,7 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
       status: (row.status || "pending") as Order["status"],
       createdAt: new Date(row.created_at),
       trackingNumber: row.tracking_number,
+      shippingPrice: row.shipping_price ?? 0,
     };
   });
 }
@@ -103,13 +109,16 @@ export function AdminPage() {
           price_paid,
           customers (name, email, phone, address), 
           tracking_number,
+          shipping_price,
           order_items (
             id, 
             name,
             texture,
             flavor, 
             toppings, 
-            quantity
+            quantity,
+            price,
+            custom_message
           )
         `)
         .order("created_at", { ascending: false });
