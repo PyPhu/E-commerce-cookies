@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CartItem, MenuItem } from '../types';
+import { CartItem } from '../types';
 import { supabase } from "../../../backend/supabaseClient";
 
 const CART_STORAGE_KEY = 'cookie-shop-cart';
@@ -30,19 +30,18 @@ export function useCart() {
 
   const [shippingRates, setShippingRates] = useState({ standard: 40, bulk: 50 });
 
-  //จัดการ Sync ตะกร้าสินค้าลง LocalStorage
+  // จัดการ Sync ตะกร้าสินค้าลง LocalStorage ของเบราว์เซอร์
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
 
-  // ดึงราคาค่าส่งจากฐานข้อมูลตอนที่ Component ถูกโหลดขึ้นมา (หรือจะเพิ่มปุ่มรีเฟรชก็ได้)
+  // ดึงราคาค่าส่งแบบ Dynamic จากตาราง products หลังตู้
   useEffect(() => {
     const fetchShippingRates = async () => {
       try {
         const { data, error } = await supabase
           .from('products')
           .select('item, price')
-          // ค้นหาแถวที่มีชื่อตามวิธีที่ 1 (อย่าลืมตั้งชื่อใน DB ให้ตรงกันนะครับ)
           .or('item.eq.Shipping Standard (<=10),item.eq.Shipping Bulk (>10)');
 
         if (data && !error) {
@@ -65,7 +64,6 @@ export function useCart() {
 
   const addToCart = async (item: CartItem) => {
     let updatedQuantity = 1;
-
     let finalPrice = item.price;
     const isCustom = item.id.includes('custom') || item.type === 'custom' || item.name.toLowerCase().includes('custom');
 
@@ -80,8 +78,6 @@ export function useCart() {
         const existingItem = prevCart[existingItemIndex];
         updatedQuantity = existingItem.quantity + 1;
 
-        console.log(`📦 ${item.name}: ${existingItem.quantity} → ${updatedQuantity}`);
-
         const newCart = [...prevCart];
         newCart[existingItemIndex] = {
           ...existingItem,
@@ -91,31 +87,36 @@ export function useCart() {
         return newCart;
       } else {
         updatedQuantity = 1;
-        console.log(`✨ Adding new: ${item.name}`);
         return [...prevCart, { ...item, price: finalPrice, quantity: 1 }];
       }
     });
 
     const customerId = await getCustomerId();
     if (customerId) {
+      // ตรวจสอบโครงสร้างรสชาติ (flavor) ให้เป็น Array เสมอ เพื่อแมปเข้าคอลัมน์ _text ในตาราง cart_items
+      let flavorArray: string[] = [];
+      if (Array.isArray(item.flavor)) {
+        flavorArray = item.flavor;
+      } else if (item.flavor) {
+        flavorArray = [item.flavor as string];
+      }
+
       const { error } = await supabase
         .from('cart_items')
         .upsert({
           customer_id: customerId,
           product_id: item.id,
           name: item.name,
-          price: finalPrice,
+          price: Number(finalPrice), // 🌟 ตรวจสอบให้มั่นใจว่าเป็น Number ตรงตามประเภท numeric ใน DB
           quantity: updatedQuantity,
           texture: item.texture || '',
-          flavor: Array.isArray(item.flavor) ? item.flavor : (item.flavor ? [item.flavor] : []),
+          flavor: flavorArray,       // 🌟 ส่งค่าไปเป็น Array สอดคล้องกับคอลัมน์ _text
           toppings: item.toppings || [],
           custom_message: item.custom_message || ''
         }, { onConflict: 'customer_id, product_id' });
 
       if (error) {
         console.error("❌ DB sync error:", error.message);
-      } else {
-        console.log(`✅ Synced: ${item.name} qty=${updatedQuantity}`);
       }
     }
   };
@@ -169,12 +170,11 @@ export function useCart() {
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // กรองคัดนับเฉพาะจำนวนชิ้นคุกกี้หลัก (ไม่นับแถวที่เป็น Toppings แยก เพื่อไม่ให้ค่าส่งคำนวณพลาด)
+  // คัดแยกนับเฉพาะคุกกี้หลัก (ไม่นับแถวท็อปปิ้งแยก)
   const cookieOnlyItems = cart
     .filter(item => !item.name.toLowerCase().includes('topping'))
     .reduce((sum, item) => sum + item.quantity, 0);
 
-  // 🌟 ดึงราคาจาก state `shippingRates` มาใช้แทนเลขเดิม
   const shippingFee = cookieOnlyItems === 0
     ? 0
     : (cookieOnlyItems > 10 ? shippingRates.bulk : shippingRates.standard);

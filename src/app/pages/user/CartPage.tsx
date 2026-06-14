@@ -47,22 +47,6 @@ export function CartPage() {
     );
   }
 
-  //pull data from supabase and display it in the cart page
-  // 1. ฟังก์ชันดึงข้อมูล (ดึง userId ภายในฟังก์ชัน)
-  const fetchCart = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return [];
-
-    const { data, error } = await supabase
-      .from("cart_items")
-      .select("*")
-      .eq('customer_id', user.id);
-
-    if (error) throw error;
-    return data;
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-4xl mb-8">Shopping Cart</h1>
