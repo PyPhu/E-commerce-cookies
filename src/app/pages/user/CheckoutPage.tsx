@@ -8,7 +8,6 @@ import { supabase } from "../../../../backend/supabaseClient";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  // 🌟 ดึง clearCart เพิ่มเข้ามาเพื่อใช้ล้างตะกร้าตอนจ่ายเสร็จ
   const { cart, totalPrice, shippingFee, clearCart } = useCart();
 
   const [userInfo, setUserInfo] = useState<UserInfo>(() => {
@@ -21,7 +20,6 @@ export function CheckoutPage() {
     };
   });
 
-  // 🌟 เพิ่ม State ใหม่เพื่อรองรับระบบ PromptPay QR และ Slip
   const [qrCodeUrl, setQrCodeUrl] = useState<string>(""); // เก็บภาพ Base64 ของ QR Code
   const [orderId, setOrderId] = useState<string>("");     // เก็บ ID ออเดอร์ที่เจนขึ้นมา
   const [isGeneratingQr, setIsGeneratingQr] = useState<boolean>(false);
@@ -58,7 +56,6 @@ export function CheckoutPage() {
     checkAuth();
   }, []);
 
-  // 🌟 ฟังก์ชันจังหวะที่ 1: เปลี่ยนจากเปิด Stripe เป็นการเรียก API ของเราเพื่อเจน QR Code
   const handleCheckout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
@@ -80,7 +77,7 @@ export function CheckoutPage() {
 
       const grandTotal = totalPrice + shippingFee;
 
-      // 🔄 ยิงหา Express Server หลังบ้านของเรา (สมมติว่ารันที่ port 3000)
+      // ยิงหา Express Server หลังบ้านของเรา
       const res = await fetch("http://localhost:3000/create-payment-qr", {
         method: "POST",
         headers: {
@@ -113,45 +110,45 @@ export function CheckoutPage() {
     }
   };
 
-  // 🌟 ฟังก์ชันจังหวะที่ 2: เมื่อลูกค้าสแกนโอนแล้วแนบไฟล์รูปสลิปส่งมา
+  // เมื่อลูกค้าสแกนโอนแล้วแนบไฟล์รูปสลิปส่งมา
   const handleSubmitSlip = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!slipFile) {
-      toast.error("Please select your transaction slip image");
-      return;
+  e.preventDefault();
+  if (!slipFile) {
+    toast.error("Please select your transaction slip image");
+    return;
+  }
+
+  setIsSubmittingSlip(true);
+
+  try {
+    // ใช้ FormData เพื่อให้สามารถแนบไฟล์รูปภาพไปกับ Request ได้
+    const formData = new FormData();
+    formData.append("orderId", orderId);
+    formData.append("customerEmail", userInfo.email);
+    formData.append("slip", slipFile); // แนบไฟล์รูปสลิป
+
+    const res = await fetch("http://localhost:3000/submit-slip", {
+      method: "POST",
+      // ⚠️ ห้ามใส่ Content-Type: application/json เพราะเราส่งเป็น FormData
+      body: formData, 
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      await clearCart();
+      toast.success("Payment confirmed successfully!");
+      navigate("/success", { replace: true });
+    } else {
+      toast.error(data.error || "Failed to process payment verification");
     }
-
-    setIsSubmittingSlip(true);
-
-    try {
-      // 🔄 ยิงบอก Express Server ว่าออเดอร์นี้สลิปมาแล้วนะ ให้ปรับสถานะเป็น paid และล้างตะกร้า
-      const res = await fetch("http://localhost:3000/submit-slip", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          customerEmail: userInfo.email
-        })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        await clearCart(); // ล้างตะกร้าใน LocalStorage และฝั่ง Supabase
-        toast.success("Payment confirmed successfully!");
-        navigate("/success", { replace: true }); // พาวิ่งไปหน้าจ่ายเงินสำเร็จ
-      } else {
-        toast.error(data.error || "Failed to process payment verification");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error communicating with server during slip upload");
-    } finally {
-      setIsSubmittingSlip(false);
-    }
-  };
+  } catch (error) {
+    console.error(error);
+    toast.error("Error communicating with server during slip upload");
+  } finally {
+    setIsSubmittingSlip(false);
+  }
+};
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">

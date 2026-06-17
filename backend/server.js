@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import { createClient } from "@supabase/supabase-js"
 import generatePayload from 'promptpay-qr'
 import QRCode from 'qrcode'
+import multer from 'multer' // 🌟 แก้ไขตรงนี้เรียบร้อย
 
 dotenv.config({ path: "../.env" })
 
@@ -16,9 +17,11 @@ const supabase = createClient(
     process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 )
 
+const upload = multer({ storage: multer.memoryStorage() });
+
+// ── 1. API สร้าง QR Code ──
 app.post("/create-payment-qr", async (req, res) => {
     try {
-        // get data from frontend
         const { cart, userInfo, grandTotal, shippingFee } = req.body;
         const targetPromptpay = process.env.SHOP_PROMPTPAY;
 
@@ -29,7 +32,6 @@ app.post("/create-payment-qr", async (req, res) => {
             return res.status(500).json({ error: "Shop PromptPay number is missing in .env" })
         }
 
-        // use email to find customer_id 
         const { data: customer, error: customerError } = await supabase
             .from('customers')
             .select('id')
@@ -41,14 +43,13 @@ app.post("/create-payment-qr", async (req, res) => {
             return res.status(400).json({ error: "Customer not found" });
         }
 
-        // create order in orders table and get order_id
         const { data: order, error: orderError } = await supabase
             .from('orders')
             .insert({
                 customer_id: customer.id,
                 status: 'pending', 
-                price_paid: Math.round(parseFloat(grandTotal)), // บันทึกเข้าคอลัมน์ price_paid 
-                shipping_price: Math.round(parseFloat(shippingFee || 0)) // บันทึกเข้าคอลัมน์ shipping_price 
+                price_paid: Math.round(parseFloat(grandTotal)), 
+                shipping_price: Math.round(parseFloat(shippingFee || 0)) 
             })
             .select('id')
             .single();
@@ -57,9 +58,7 @@ app.post("/create-payment-qr", async (req, res) => {
             throw new Error(`Failed to create order: ${orderError.message}`);
         }
 
-        // save order items in order_items table with order_id as foreign key
         const orderItems = cart.map(item => {
-            // แปลงรสชาติให้อยู่ในรูปแบบ Array เสมอตาม Type _text ในฐานข้อมูล
             let flavorArray = [];
             if (Array.isArray(item.flavors) && item.flavors.length > 0) {
                 flavorArray = item.flavors;
@@ -87,17 +86,14 @@ app.post("/create-payment-qr", async (req, res) => {
             throw new Error(`Failed to save order items: ${itemsError.message}`);
         }
 
-        // gen PromptPay QR Code Payload
         const payload = generatePayload(targetPromptpay, { amount: parseFloat(grandTotal) });
         
-        // แปลง Payload เป็น Base64 รูปภาพ
         const qrCodeDataUrl = await QRCode.toDataURL(payload, {
             errorCorrectionLevel: 'H',
             margin: 2,
             width: 300
         });
 
-        // ส่งค่ากลับไปหา Frontend
         res.json({ 
             success: true,
             orderId: order.id,
@@ -111,33 +107,59 @@ app.post("/create-payment-qr", async (req, res) => {
     }
 });
 
-// update order status to 'paid' when customer submit slip and clear cart items in Supabase DB
-app.post("/submit-slip", async (req, res) => {
+// ── 2. API รับสลิปและล้างตะกร้า (ยุบรวมอันเดียวแบบฉลาด) ──
+app.post("/submit-slip", upload.single("slip"), async (req, res) => {
     try {
         const { orderId, customerEmail } = req.body;
+        const file = req.file; 
 
         if (!orderId || !customerEmail) {
-            return res.status(400).json({ error: "Missing required details" });
+            return res.status(400).json({ success: false, error: "Missing required details" });
+        }
+        if (!file) {
+            return res.status(400).json({ success: false, error: "No slip file uploaded" });
         }
 
-        // update order status to 'paid'
+        // สเต็ปที่ 1: อัปโหลดไฟล์สลิปขึ้น Supabase Storage
+        const fileExtension = file.originalname.split('.').pop();
+        const fileName = `slip_${orderId}_${Date.now()}.${fileExtension}`;
+
+        const { data: storageData, error: storageError } = await supabase.storage
+            .from('payment-slips')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+                upsert: true
+            });
+
+        if (storageError) {
+            throw new Error(`Failed to upload slip image: ${storageError.message}`);
+        }
+
+        // สเต็ปที่ 2: ดึง Public URL มาเก็บไว้
+        const { data: { publicUrl } } = supabase.storage
+            .from('payment-slips')
+            .getPublicUrl(fileName);
+
+        // สเต็ปที่ 3: อัปเดตสถานะออเดอร์พร้อมบันทึกลิงก์สลิป
         const { error: updateOrderError } = await supabase
             .from('orders')
-            .update({ status: 'paid' })
+            .update({ 
+                status: 'pending_verification', // เปลี่ยนเป็นรอแอดมินตรวจสลิป
+                slip_url: publicUrl 
+            })
             .eq('id', orderId);
 
         if (updateOrderError) {
             throw new Error(`Failed to update order status: ${updateOrderError.message}`);
         }
 
-        // find customer_id by email to clear cart items
+        // สเต็ปที่ 4: ค้นหา ID ลูกค้าเพื่อล้างตะกร้าสินค้าในระบบฐานข้อมูล
         const { data: customer } = await supabase
             .from('customers')
             .select('id')
             .eq('email', customerEmail.toLowerCase())
             .single();
 
-        // clear cart items in Supabase DB for the customer
         if (customer) {
             await supabase
                 .from('cart_items')
@@ -145,12 +167,12 @@ app.post("/submit-slip", async (req, res) => {
                 .eq('customer_id', customer.id);
         }
 
-        console.log(`✅ order number${orderId} submitted slip successfully!!! ${customerEmail}`);
-        res.json({ success: true, message: "Order payment updated successfully" });
+        console.log(`✅ Order ${orderId} submitted slip successfully by ${customerEmail}`);
+        res.json({ success: true, message: "Slip uploaded, order updated and cart cleared successfully!" });
 
     } catch (error) {
         console.error("❌ Submit Slip Error:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
