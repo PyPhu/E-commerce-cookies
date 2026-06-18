@@ -189,19 +189,17 @@ export function AdminPage() {
   //  โค้ดใหม่ที่รองรับทั้งรสชาติเดี่ยว (String) และหลายรสชาติ (Array)
 const flavorData = thisWeekOrders.reduce((acc, order) => {
   order.items.forEach(item => {
-    if (item.flavor) {
-      // 1. แปลงข้อมูลให้เป็น Array เสมอ (ถ้าเป็น String ก็จับยัดใส่ตระกร้า Array ซะ)
-      const flavorsArray = Array.isArray(item.flavor) 
-        ? item.flavor 
-        : [item.flavor];
-
-      // 2. วนลูปนับแยกทีละรสชาติใน Array น้ันๆ
-      flavorsArray.forEach((singleFlavor: string) => {
-        if (!singleFlavor) return;
+    // ตรวจสอบว่า item.flavor มีข้อมูลและเป็น Array จริงๆ
+    if (item.flavor && Array.isArray(item.flavor)) {
+      
+      item.flavor.forEach((singleFlavor) => {
+        // ตรวจสอบความปลอดภัย: ข้ามข้อมูลที่เป็นค่าว่าง หรือไม่ใช่ string
+        if (!singleFlavor || typeof singleFlavor !== "string") return;
         
         const cleanFlavor = singleFlavor.trim();
+        if (!cleanFlavor) return; // ถ้า trim แล้วเป็นค่าว่างก็ให้ข้ามไป
         
-        // หาดูว่าเคยเจอรสชาตินี้ในตัวสะสม (acc) หรือยัง
+        // ค้นหาว่าในตัวสะสม (acc) มีรสชาตินี้อยู่แล้วหรือยัง
         const existing = acc.find(
           (f: any) => typeof f.flavor === "string" && f.flavor.toLowerCase() === cleanFlavor.toLowerCase()
         );
@@ -212,6 +210,7 @@ const flavorData = thisWeekOrders.reduce((acc, order) => {
           acc.push({ flavor: cleanFlavor, count: item.quantity });
         }
       });
+
     }
   });
   return acc;

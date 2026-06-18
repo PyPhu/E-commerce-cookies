@@ -1,4 +1,4 @@
-import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck } from "lucide-react";
+import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck, Image } from "lucide-react"; // 🌟 เพิ่มไอคอน Image
 import { Order } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 import { toast } from "sonner";
@@ -13,8 +13,21 @@ interface OrderDetailsModalProps {
 }
 
 export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, setFilteredOrders }: OrderDetailsModalProps) {
+  // 1. ประกาศ Hooks ไว้ด้านบนสุดให้ครบทั้งหมดเสมอ (ห้ามมี return คั่นกลาง)
+  const [activeSlipUrl, setActiveSlipUrl] = React.useState<string | null>(null);
+  const [trackingNumber, setTrackingNumber] = React.useState("");
+
+  // ซิงค์ trackingNumber เมื่อข้อมูล filteredOrders เปลี่ยนแปลง
+  React.useEffect(() => {
+    if (filteredOrders && filteredOrders[0]) {
+      setTrackingNumber(filteredOrders[0].trackingNumber || "");
+    }
+  }, [filteredOrders]);
+
+  // 2. ย้ายเงื่อนไขตรวจสอบการเปิด/ปิด Modal มาไว้ตรงนี้ (หลังจากเคลียร์ Hook ครบ)
   if (!isOpen) return null;
 
+  // 3. ฟังก์ชันการทำงานอื่นๆ เหมือนเดิม...
   const handleUpdateStatus = async (orderId: string, newStatus: "paid" | "preparing" | "ready" | "completed") => {
     try {
       const { error } = await supabase
@@ -26,12 +39,10 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
 
       toast.success(`อัปเดตสเตตัสออเดอร์ #${orderId} เรียบร้อยแล้ว`);
 
-      // 1. อัปเดตสถานะให้ UI ของตัวแปรกลุ่มที่แสดงอยู่ใน Modal เปลี่ยนตามสด ๆ
       setFilteredOrders(prev =>
         prev.map(order => order.id === orderId ? { ...order, status: newStatus as any } : order)
       );
 
-      // 2. ซิงค์ค่าย้อนกลับไปหาออบเจกต์ด้านนอกตารางทันที
       filteredOrders.forEach(order => {
         if (order.id === orderId) {
           order.status = newStatus as any;
@@ -40,11 +51,9 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
 
     } catch (err: any) {
       console.error(err);
-      toast.error("ไม่สามารถเปลี่ยนสเตตัสได้: " + err.message);
+      toast.error("can't change status: " + err.message);
     }
   };
-
-  const [trackingNumber, setTrackingNumber] = React.useState(filteredOrders[0]?.trackingNumber || "");
 
   const handleTrackingNumberChange = async (orderId: string, newTrackingNumber: string) => {
     try {
@@ -57,14 +66,13 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
 
       toast.success(`อัปเดตหมายเลขติดตามออเดอร์ #${orderId} เรียบร้อยแล้ว`);
 
-      // อัปเดต UI สำหรับการแสดงหมายเลขติดตาม
       setFilteredOrders(prev =>
         prev.map(order => order.id === orderId ? { ...order, trackingNumber: newTrackingNumber } : order)
       );
 
     } catch (err: any) {
       console.error(err);
-      toast.error("ไม่สามารถอัปเดตหมายเลขติดตามได้: " + err.message);
+      toast.error("can't update tracking number: " + err.message);
     }
   };
 
@@ -101,29 +109,23 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                   <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border shadow-sm">
                     <span className="text-xs text-gray-400 font-bold px-2">Status:</span>
 
-                    {/* ปุ่มที่ 1: เปลี่ยนจาก waiting เป็น Paid */}
                     <button
                       onClick={() => handleUpdateStatus(order.id, "paid")}
-                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "paid" ? "bg-amber-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
-                        }`}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "paid" ? "bg-amber-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
                     >
                       Paid
                     </button>
 
-                    {/* ปุ่มที่ 2: preparing */}
                     <button
                       onClick={() => handleUpdateStatus(order.id, "preparing")}
-                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "preparing" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
-                        }`}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "preparing" ? "bg-blue-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
                     >
                       <Flame className="w-3 h-3" /> Baking
                     </button>
 
-                    {/* ปุ่มที่ 3: completed */}
                     <button
                       onClick={() => handleUpdateStatus(order.id, "completed")}
-                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "completed" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
-                        }`}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "completed" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
                     >
                       <Truck className="w-3 h-3" /> Shipped
                     </button>
@@ -132,28 +134,49 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
 
                 <div className="p-4 grid md:grid-cols-2 gap-6">
                   {/* ข้อมูลลูกค้า */}
-                  <div className="space-y-2.5 border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-4">
-                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">shipped info</h4>
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <User className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <div><span className="font-semibold">{order.user.name}</span> <span className="text-xs text-gray-400">({order.user.email})</span></div>
-                    </div>
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <Phone className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <div>{order.user.phone || "No telephone number"}</div>
-                    </div>
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <MapPin className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                      <div className="text-xs leading-relaxed">{order.user.address || "No address available"}</div>
-                    </div>
-                      <div className="flex items-center gap-1 text-gray-500"><Hash className="w-3 h-3" /> Tracking Number</div>
-                    <div className="p-2 rounded-lg border text-sm bg-gray-50 border-gray-100">
-                        <input type="text" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="w-full bg-transparent text-gray-500 text-xs font-mono" placeholder="No tracking number" />
+                  <div className="space-y-2.5 border-b md:border-b-0 md:border-r border-gray-100 pb-4 md:pb-0 md:pr-4 flex flex-col justify-between">
+                    <div className="space-y-2.5">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">shipped info</h4>
+                      <div className="flex items-start gap-2 text-sm text-gray-700">
+                        <User className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                        <div><span className="font-semibold">{order.user.name}</span> <span className="text-xs text-gray-400">({order.user.email})</span></div>
                       </div>
-                        <button onClick={() => handleTrackingNumberChange(order.id, trackingNumber)} className="mt-1 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors">
+                      <div className="flex items-start gap-2 text-sm text-gray-700">
+                        <Phone className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                        <div>{order.user.phone || "No telephone number"}</div>
+                      </div>
+                      <div className="flex items-start gap-2 text-sm text-gray-700">
+                        <MapPin className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs leading-relaxed">{order.user.address || "No address available"}</div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 text-gray-500 pt-2"><Hash className="w-3 h-3" /> Tracking Number</div>
+                      <div className="p-2 rounded-lg border text-sm bg-gray-50 border-gray-100 flex gap-2">
+                        <input type="text" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} className="w-full bg-transparent text-gray-600 text-xs font-mono focus:outline-none" placeholder="No tracking number" />
+                        <button onClick={() => handleTrackingNumberChange(order.id, trackingNumber)} className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[10px] rounded-md transition-colors flex-shrink-0 font-bold">
                           Update
                         </button>
-                </div>
+                      </div>
+                    </div>
+
+                    {/* 🌟 ส่วนสำหรับแสดงการตรวจสอบ E-Slip เงินโอน ยึดข้อมูลจาก slip_url */}
+                    <div className="pt-4 mt-4 border-t border-gray-100">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Payment Receipt</h4>
+                      {(order as any).slipUrl ? (
+                        <button 
+                          onClick={() => setActiveSlipUrl((order as any).slipUrl)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl font-medium text-xs transition-all shadow-sm group"
+                        >
+                          <Image className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+                          Click to view payment receipt (E-Slip)
+                        </button>
+                      ) : (
+                        <div className="text-center p-3 rounded-xl border border-dashed border-gray-200 text-xs text-gray-400">
+                          Don't have a slip URL for this order.
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   {/* รายการสินค้าในบิล */}
                   <div className="flex flex-col justify-between">
@@ -185,13 +208,15 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-bold">
-                      <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" />Shipping Fee:</div>
-                      <span className="text-base text-amber-700">฿{order.shippingPrice!.toFixed(2)}</span>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-bold">
-                      <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" /> Total Amount:</div>
-                      <span className="text-base text-amber-700">฿{order.total.toFixed(2)}</span>
+                    <div className="space-y-2 pt-3 border-t border-gray-100">
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" />Shipping Fee:</div>
+                        <span className="text-base text-amber-700">฿{order.shippingPrice!.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <div className="flex items-center gap-1 text-gray-500"><Receipt className="w-4 h-4" /> Total Amount:</div>
+                        <span className="text-base text-amber-700">฿{order.total.toFixed(2)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -203,15 +228,31 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
 
         {/* Footer */}
         <div className="border-t p-4 bg-gray-50 flex justify-end rounded-b-2xl">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm"
-          >
+          <button onClick={onClose} className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm">
             close window
           </button>
         </div>
 
       </div>
+
+      {/* 🌟 Nested Modal: สไลด์ขึ้นเพื่อขยายดูภาพ E-Slip ชัดๆ เมื่อคลิกเปิดหลักฐานโอนเงิน */}
+      {activeSlipUrl && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-[60] p-4 animate-in fade-in duration-200">
+          <div className="relative max-w-md w-full flex flex-col items-center animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setActiveSlipUrl(null)}
+              className="absolute -top-12 right-0 flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs transition-colors backdrop-blur-sm"
+            >
+              <X className="w-4 h-4" /> ปิดรูปภาพ
+            </button>
+            <img 
+              src={activeSlipUrl} 
+              alt="Payment Slip" 
+              className="w-full h-auto max-h-[75vh] object-contain rounded-xl shadow-2xl bg-white"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
