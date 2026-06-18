@@ -338,7 +338,7 @@ export function UserProfilePage() {
                 <span className=" text-gray-500">Phurin</span>
               </p>
               <p><span className="flex justify-end text-gray-500">Krissada</span></p>
-              <p><span className="flex justify-end text-gray-500">Sopolwit</span></p>
+              <p><span className="flex justify-end text-gray-500">Soponwit</span></p>
               <p className="flex justify-between">
                 <span className="text-gray-500">Role:</span>
                 <span className="text-amber-500 font-medium">Full-Stack Developer</span>
