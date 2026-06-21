@@ -7,8 +7,8 @@ import { UserInfo } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 
 // ✅ Declare env vars once at the top — fixes the red type errors throughout
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string;
 
 // ✅ Convert a File to base64 (without the data: prefix) for JSON transport
 function fileToBase64(file: File): Promise<string> {
