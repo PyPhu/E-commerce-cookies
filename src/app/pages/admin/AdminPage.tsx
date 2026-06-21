@@ -83,6 +83,7 @@ function formatSupabaseOrders(rows: OrderRow[]): Order[] {
       createdAt: new Date(row.created_at),
       trackingNumber: row.tracking_number,
       shippingPrice: row.shipping_price ?? 0,
+      slipUrl: (row as any).slip_url ?? '', // ดึงค่า slip_url จาก Supabase
     };
   });
 }
@@ -110,6 +111,7 @@ export function AdminPage() {
           customers (name, email, phone, address), 
           tracking_number,
           shipping_price,
+          slip_url,
           order_items (
             id, 
             name,

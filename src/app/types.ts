@@ -30,6 +30,7 @@ export interface Order {
   createdAt: Date;
   trackingNumber?: string;
   shippingPrice?: number;
+  slipUrl?: string;
 }
 
 export interface Product {

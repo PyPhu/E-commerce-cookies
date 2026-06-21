@@ -76,6 +76,21 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
     }
   };
 
+  const handleShowSlip = async () => {
+    if (filteredOrders.length > 0) {
+      const slipUrl = (filteredOrders[0] as any).slipUrl;
+      if (slipUrl) {
+        const signedUrl = await supabase.storage.from('e-slips').createSignedUrl(slipUrl, 600);
+        if (signedUrl.data && signedUrl.data.signedUrl) {
+          setActiveSlipUrl(signedUrl.data.signedUrl);
+        } else {
+          console.error('Failed to create signed URL', signedUrl.error);
+          toast.error('Failed to load slip image.');
+        }
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
@@ -164,7 +179,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Payment Receipt</h4>
                       {(order as any).slipUrl ? (
                         <button 
-                          onClick={() => setActiveSlipUrl((order as any).slipUrl)}
+                          onClick={handleShowSlip}
                           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl font-medium text-xs transition-all shadow-sm group"
                         >
                           <Image className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
