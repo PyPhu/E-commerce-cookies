@@ -390,10 +390,13 @@ export function UserProfilePage() {
                           ? "bg-green-100 text-green-700" // Shipped
                           : order.status === "preparing"
                             ? "bg-blue-100 text-blue-700"  // Baking
-                            : "bg-amber-100 text-amber-700" // Paid
+                            : order.status === "paid"
+                              ? "bg-amber-100 text-amber-700" // Paid
+                              : "bg-gray-100 text-gray-700" // Pending
+
                           }`}
                       >
-                        {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
+                        {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : order.status === "paid" ? "Paid" : "Pending"}
                       </span>
                     </div>
 

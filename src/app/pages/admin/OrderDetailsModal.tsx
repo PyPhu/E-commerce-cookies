@@ -1,4 +1,4 @@
-import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck, Image } from "lucide-react"; // 🌟 เพิ่มไอคอน Image
+import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck, Image, Clock, DollarSign } from "lucide-react"; // 🌟 เพิ่มไอคอน Image
 import { Order } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
   if (!isOpen) return null;
 
   // 3. ฟังก์ชันการทำงานอื่นๆ เหมือนเดิม...
-  const handleUpdateStatus = async (orderId: string, newStatus: "paid" | "preparing" | "ready" | "completed") => {
+  const handleUpdateStatus = async (orderId: string, newStatus: "pending" |"paid" | "preparing" | "ready" | "completed") => {
     try {
       const { error } = await supabase
         .from("orders")
@@ -125,10 +125,17 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                     <span className="text-xs text-gray-400 font-bold px-2">Status:</span>
 
                     <button
+                      onClick={() => handleUpdateStatus(order.id, "pending")}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "pending" ? "bg-gray-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
+                    >
+                      <Clock className="w-3 h-3" /> Pending
+                    </button>
+
+                    <button
                       onClick={() => handleUpdateStatus(order.id, "paid")}
                       className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "paid" ? "bg-amber-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
                     >
-                      Paid
+                      <DollarSign className="w-3 h-3" /> Paid
                     </button>
 
                     <button
