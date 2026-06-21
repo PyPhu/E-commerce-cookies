@@ -12,7 +12,7 @@ interface AdminTablesProps {
 export function AdminTables({ orders, cookieSummary, availableProducts }: AdminTablesProps) {
   const displayList = availableProducts.filter(name => {
     const lowerName = name.toLowerCase();
-    return !lowerName.includes("close") && !lowerName.includes("topping");
+    return !lowerName.includes("close") && !lowerName.includes("topping") && !lowerName.includes("shipping");
   });
 
   if (!displayList.some(name => name.toLowerCase().includes("custom"))) {
@@ -132,13 +132,13 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                 return (
                   <tr key={order.id} className="border-b hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-4 text-sm font-mono text-gray-600">#{order.id}</td>
-                    
+
                     {/* 🌟 4. ใส่ Optional Chaining (?.) กันข้อมูลลูกค้าพัง */}
                     <td className="py-4 px-4">
                       <div className="font-semibold text-gray-800">{order.user?.name || "Unknown Customer"}</div>
                       <div className="text-xs text-gray-500">{order.user?.email || "No Email"}</div>
                     </td>
-                    
+
                     <td className="py-4 px-4 text-sm text-gray-600">
                       {order.items.map((item: any, idx) => (
                         <div key={idx} className="mb-0.5">
@@ -156,11 +156,10 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
-                        order.status === "completed" ? "bg-green-100 text-green-700" :
-                        order.status === "preparing" ? "bg-blue-100 text-blue-700" :
-                        "bg-amber-100 text-amber-700"
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${order.status === "completed" ? "bg-green-100 text-green-700" :
+                          order.status === "preparing" ? "bg-blue-100 text-blue-700" :
+                            "bg-amber-100 text-amber-700"
+                        }`}>
                         {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : "Paid"}
                       </span>
                     </td>
