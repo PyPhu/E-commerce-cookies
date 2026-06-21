@@ -28,7 +28,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
   if (!isOpen) return null;
 
   // 3. ฟังก์ชันการทำงานอื่นๆ เหมือนเดิม...
-  const handleUpdateStatus = async (orderId: string, newStatus: "pending" |"paid" | "preparing" | "ready" | "completed") => {
+  const handleUpdateStatus = async (orderId: string, newStatus: "pending" |"paid" | "preparing" | "ready" | "completed" | "cancelled") => {
     try {
       const { error } = await supabase
         .from("orders")
@@ -151,6 +151,13 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                     >
                       <Truck className="w-3 h-3" /> Shipped
                     </button>
+
+                    <button
+                      onClick={() => handleUpdateStatus(order.id, "cancelled")}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "cancelled" ? "bg-red-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
+                    >
+                      <X className="w-3 h-3" /> Cancelled
+                    </button>
                   </div>
                 </div>
 
@@ -246,13 +253,6 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
               </div>
             ))
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t p-4 bg-gray-50 flex justify-end rounded-b-2xl">
-          <button onClick={onClose} className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm">
-            close window
-          </button>
         </div>
 
       </div>

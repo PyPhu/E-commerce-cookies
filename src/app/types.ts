@@ -26,7 +26,7 @@ export interface Order {
   user: UserInfo;
   items: CartItem[];
   total: number;
-  status: 'pending' | 'preparing' | 'ready' | 'completed';
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
   createdAt: Date;
   trackingNumber?: string;
   shippingPrice?: number;

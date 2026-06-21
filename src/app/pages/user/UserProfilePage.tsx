@@ -176,7 +176,6 @@ export function UserProfilePage() {
     }
   };
 
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -385,19 +384,39 @@ export function UserProfilePage() {
                       </div>
 
                       {/* 🌟 ปรับปรุงส่วนการเช็คสเตตัสและจับคู่สีสันให้ตรงกับฝั่งแอดมิน */}
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${order.status === "completed"
-                          ? "bg-green-100 text-green-700" // Shipped
-                          : order.status === "preparing"
-                            ? "bg-blue-100 text-blue-700"  // Baking
-                            : order.status === "paid"
-                              ? "bg-amber-100 text-amber-700" // Paid
-                              : "bg-gray-100 text-gray-700" // Pending
+                      {(() => {
+                        const currentStatus = (order.status || "").trim().toLowerCase();
 
-                          }`}
-                      >
-                        {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : order.status === "paid" ? "Paid" : "Pending"}
-                      </span>
+                        let badgeClass = "bg-gray-100 text-gray-700"; // Default: Pending
+                        let statusText = "Pending";
+
+                        if (currentStatus === "completed") {
+                          badgeClass = "bg-green-100 text-green-700";
+                          statusText = "Shipped";
+                        }
+                        else if (currentStatus === "preparing") {
+                          badgeClass = "bg-blue-100 text-blue-700";
+                          statusText = "Baking";
+                        }
+                        else if (currentStatus === "paid") {
+                          badgeClass = "bg-amber-100 text-amber-700";
+                          statusText = "Paid";
+                        }
+                        else if (currentStatus === "cancelled") {
+                          badgeClass = "bg-red-100 text-red-700";
+                          statusText = "Cancelled";
+                        }
+                        else if (currentStatus === "ready") {
+                          badgeClass = "bg-purple-100 text-purple-700";
+                          statusText = "Ready";
+                        }
+
+                        return (
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${badgeClass}`}>
+                            {statusText}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     {/* รายการคุกกี้ในออเดอร์ */}
@@ -420,15 +439,15 @@ export function UserProfilePage() {
                               )}
                               {item.custom_message && (
                                 <p className="text-pretty break-words whitespace-pre-wrap w-[200px]">• Note: {item.custom_message}</p>
-                               )}
+                              )}
                             </div>
                           )}
-                        </div> 
+                        </div>
                       ))}
                       <div className="border-t pt-2 mt-2 flex justify-start gap-4 text-sm">
                         <span>Shipping fee:</span>
                         <span className="text-amber-800">
-                          ฿{order.shipping_price ?? 0 }
+                          ฿{order.shipping_price ?? 0}
                         </span>
                         <span>Total Paid:</span>
                         <span className="text-amber-800">
