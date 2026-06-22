@@ -156,15 +156,16 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${order.status === "completed" ? "bg-green-100 text-green-700" :
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                        order.status === "completed" ? "bg-green-100 text-green-700" :
                           order.status === "preparing" ? "bg-blue-100 text-blue-700" :
-                            order.status === "pending" ? "bg-rose-100 text-gray-700" : // เพิ่มสีสำหรับรอดำเนินการ
+                            order.status === "pending" ? "bg-gray-100 text-gray-700" : 
                               "bg-amber-100 text-amber-700"
                         }`}>
                         {
                           order.status === "completed" ? "Shipped" :
                             order.status === "preparing" ? "Baking" :
-                              order.status === "pending" ? "Pending" : // แสดงผลคำว่า Pending ตรงๆ
+                              order.status === "pending" ? "Pending" :
                                 "Paid"
                         }
                       </span>
