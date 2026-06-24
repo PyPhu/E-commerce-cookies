@@ -20,7 +20,9 @@ export function HomePage() {
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("show", true);
+        .eq("show", true)
+        .neq("item", "Shipping Standard (<=10)")
+        .neq("item", "Shipping Bulk (>10)");
 
       if (error) {
         toast.error("Failed to load menu");
