@@ -18,24 +18,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkUserRole = async () => {
         try {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-            if (!session?.user) {
+            if (userError || !user) {
                 setIsAdmin(false);
                 setUser(null);
                 setLoading(false);
                 return;
             }
 
-            setUser(session.user);
+            setUser(user);
 
             // query the role from the customers table (by uuid)
             const { data, error } = await supabase
                 .from('customers')
                 .select('role')
-                .eq('id', session.user.id)
+                .eq('id', user.id)
+                .limit(1);
 
-            if (!error && data) {
+            if (!error && data && data.length > 0) {
                 setIsAdmin(data[0].role === 'admin');
             } else {
                 setIsAdmin(false);
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (err) {
             console.error("Error checking role:", err);
             setIsAdmin(false);
-        }  finally {
+        } finally {
             setLoading(false);
         }
     };
