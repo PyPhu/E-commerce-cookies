@@ -44,7 +44,6 @@ export function LoginPage() {
       .select("*")
       .eq("email", loginEmail)
       .single();
-    console.log("Fetched user profile:", data);
 
     if (data) {
       localStorage.setItem("cookie-shop-user", JSON.stringify({
@@ -95,6 +94,14 @@ export function LoginPage() {
       toast.error("Profile save failed: " + profileError.message);
       return;
     }
+
+    // Save user info to localStorage
+    localStorage.setItem("cookie-shop-user", JSON.stringify({
+      name: signupName,
+      email: signupEmail,
+      phone: signupPhone,
+      address: signupAddress,
+    }));
 
     toast.success("Account created — welcome! 🎉");
     navigate("/");
