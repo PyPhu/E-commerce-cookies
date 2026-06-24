@@ -1,4 +1,4 @@
-import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck, Image, Clock, DollarSign } from "lucide-react"; // 🌟 เพิ่มไอคอน Image
+import { X, User, Phone, MapPin, Hash, Receipt, Flame, Truck, Image, Clock, DollarSign, Ban } from "lucide-react"; // 🌟 เพิ่มไอคอน Ban
 import { Order } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
   if (!isOpen) return null;
 
   // 3. ฟังก์ชันการทำงานอื่นๆ เหมือนเดิม...
-  const handleUpdateStatus = async (orderId: string, newStatus: "pending" |"paid" | "preparing" | "ready" | "completed") => {
+  const handleUpdateStatus = async (orderId: string, newStatus: "pending" | "paid" | "preparing" | "ready" | "completed" | "cancelled") => {
     try {
       const { error } = await supabase
         .from("orders")
@@ -121,7 +121,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                   </div>
 
                   {/* แถบเปลี่ยนสถานะ */}
-                  <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border shadow-sm">
+                  <div className="flex flex-wrap items-center gap-1.5 bg-white p-1 rounded-lg border shadow-sm">
                     <span className="text-xs text-gray-400 font-bold px-2">Status:</span>
 
                     <button
@@ -150,6 +150,13 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                       className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "completed" ? "bg-green-500 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}
                     >
                       <Truck className="w-3 h-3" /> Shipped
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateStatus(order.id, "cancelled")}
+                      className={`p-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all ${(order.status as string) === "cancelled" ? "bg-red-500 text-white shadow-sm" : "text-gray-400 hover:bg-red-50 hover:text-red-500"}`}
+                    >
+                      <Ban className="w-3 h-3" /> Cancel
                     </button>
                   </div>
                 </div>
@@ -181,7 +188,7 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                       </div>
                     </div>
 
-                    {/* 🌟 ส่วนสำหรับแสดงการตรวจสอบ E-Slip เงินโอน ยึดข้อมูลจาก slip_url */}
+                    {/* ส่วนสำหรับแสดงการตรวจสอบ E-Slip เงินโอน ยึดข้อมูลจาก slip_url */}
                     <div className="pt-4 mt-4 border-t border-gray-100">
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Payment Receipt</h4>
                       {(order as any).slipUrl ? (
@@ -213,10 +220,10 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
                             </div>
                             {(item.texture || item.flavor || (item.toppings && item.toppings.length > 0)) && (
                               <div className="text-xs text-gray-400 mt-1 pl-5 border-l-2 border-dashed border-amber-300 ml-1 space-y-0.5">
-                                {item.texture && <div>• เนื้อคุกกี้: {item.texture}</div>}
-                                {item.flavor && <div>• รสชาติ: {Array.isArray(item.flavor) ? item.flavor.join(", ") : item.flavor}</div>}
+                                {item.texture && <div>• texture: {item.texture}</div>}
+                                {item.flavor && <div>• flavor: {Array.isArray(item.flavor) ? item.flavor.join(", ") : item.flavor}</div>}
                                 {item.toppings && item.toppings.length > 0 && (
-                                  <div>• ท็อปปิ้ง: {Array.isArray(item.toppings) ? item.toppings.join(", ") : item.toppings}</div>
+                                  <div>• toppings: {Array.isArray(item.toppings) ? item.toppings.join(", ") : item.toppings}</div>
                                 )}
                                 {item.custom_message && (
                                   <div className="mt-1 p-2 bg-amber-50 border border-amber-200 text-amber-700 rounded text-pretty break-words whitespace-pre-wrap">
@@ -248,16 +255,12 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
           )}
         </div>
 
-        {/* Footer */}
-        <div className="border-t p-4 bg-gray-50 flex justify-end rounded-b-2xl">
-          <button onClick={onClose} className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors shadow-sm">
-            close window
-          </button>
-        </div>
+        {/*  Footer  */}
+        <div className="border-t p-2 bg-gray-50 rounded-b-2xl" />
 
       </div>
 
-      {/* 🌟 Nested Modal: สไลด์ขึ้นเพื่อขยายดูภาพ E-Slip ชัดๆ เมื่อคลิกเปิดหลักฐานโอนเงิน */}
+      {/* Nested Modal: แสดงภาพ E-Slip */}
       {activeSlipUrl && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-[60] p-4 animate-in fade-in duration-200">
           <div className="relative max-w-md w-full flex flex-col items-center animate-in zoom-in-95 duration-200">

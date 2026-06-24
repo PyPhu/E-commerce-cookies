@@ -384,19 +384,28 @@ export function UserProfilePage() {
                         )}
                       </div>
 
-                      {/* 🌟 ปรับปรุงส่วนการเช็คสเตตัสและจับคู่สีสันให้ตรงกับฝั่งแอดมิน */}
                       <span
-                        className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${order.status === "completed"
-                          ? "bg-green-100 text-green-700" // Shipped
-                          : order.status === "preparing"
+                        className={`px-3 py-1 rounded-full text-xs capitalize font-bold ${
+                          order.status === "cancelled"
+                            ? "bg-red-100 text-red-700" // Cancelled
+                            : order.status === "completed"
+                            ? "bg-green-100 text-green-700" // Shipped
+                            : order.status === "preparing"
                             ? "bg-blue-100 text-blue-700"  // Baking
                             : order.status === "paid"
-                              ? "bg-amber-100 text-amber-700" // Paid
-                              : "bg-gray-100 text-gray-700" // Pending
-
-                          }`}
+                            ? "bg-amber-100 text-amber-700" // Paid
+                            : "bg-gray-100 text-gray-700" // Pending
+                        }`}
                       >
-                        {order.status === "completed" ? "Shipped" : order.status === "preparing" ? "Baking" : order.status === "paid" ? "Paid" : "Pending"}
+                        {order.status === "cancelled" 
+                          ? "Cancelled" 
+                          : order.status === "completed" 
+                          ? "Shipped" 
+                          : order.status === "preparing" 
+                          ? "Baking" 
+                          : order.status === "paid" 
+                          ? "Paid" 
+                          : "Pending"}
                       </span>
                     </div>
 
@@ -420,7 +429,7 @@ export function UserProfilePage() {
                               )}
                               {item.custom_message && (
                                 <p className="text-pretty break-words whitespace-pre-wrap w-[200px]">• Note: {item.custom_message}</p>
-                               )}
+                              )}
                             </div>
                           )}
                         </div> 
