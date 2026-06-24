@@ -7,8 +7,8 @@ import { UserInfo } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 
 // ✅ Declare env vars once at the top — fixes the red type errors throughout
-const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 // ✅ Convert a File to base64 (without the data: prefix) for JSON transport
 function fileToBase64(file: File): Promise<string> {
@@ -114,6 +114,7 @@ export function CheckoutPage() {
       if (data.success) {
         setQrCodeUrl(data.qrCodeUrl);
         setOrderId(Number(data.orderId)); // ✅ bigint arrives as number from edge function
+        await clearCart();               // ✅ clear cart right after order is placed
         toast.success("PromptPay QR Generated!");
       } else {
         console.error("QR Generation error:", data);
@@ -172,8 +173,7 @@ export function CheckoutPage() {
       const data = await res.json();
 
       if (data.success) {
-        await clearCart();
-        toast.success("Payment confirmed successfully!");
+        toast.success("Payment slip submitted! We'll verify your payment shortly.");
         navigate("/success", { replace: true });
       } else {
         toast.error(data.error || "Failed to process payment verification");
