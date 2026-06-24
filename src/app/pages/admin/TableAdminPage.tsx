@@ -64,7 +64,8 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
           let totalPieces = 0;
           if (orders && orders.length > 0) {
             orders.forEach(order => {
-              if (order.status === "completed") return;
+              // 🟥 ข้ามออเดอร์ที่จัดส่งสำเร็จแล้ว (completed) หรือ ถูกยกเลิกไปแล้ว (cancelled)
+              if (order.status === "completed" || order.status === "cancelled") return;
 
               order.items.forEach(item => {
                 const itemNameLower = item.name.toLowerCase();
@@ -117,23 +118,23 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
             </thead>
             <tbody>
               {currentOrders.map((order) => {
-                // 🌟 1. ถอดสูตรนับจำนวนชิ้นคุกกี้หลัก (ไม่รวม Topping แยก) เพื่อใช้คำนวณค่าส่งย้อนกลับ
+                // 1. ถอดสูตรนับจำนวนชิ้นคุกกี้หลัก (ไม่รวม Topping แยก) เพื่อใช้คำนวณค่าส่งย้อนกลับ
                 const cookiePieces = order.items?.reduce((sum: number, item: any) => {
                   const isTopping = item.name?.toLowerCase().includes('topping');
                   return isTopping ? sum : sum + (item.quantity || 0);
                 }, 0) || 0;
 
-                // 🌟 2. คำนวณค่าส่งย้อนกลับตามเงื่อนไข (ไม่เกิน 10 ชิ้นคิด 40 | เกิน 10 ชิ้นคิด 50)
+                // 2. คำนวณค่าส่งย้อนกลับตามเงื่อนไข (ไม่เกิน 10 ชิ้นคิด 40 | เกิน 10 ชิ้นคิด 50)
                 const calculatedShipping = cookiePieces === 0 ? 0 : (cookiePieces > 10 ? 50 : 40);
 
-                // 🌟 3. เรียกยอดเงินจริงจากคอลัมน์ price_paid ใน Supabase (ถ้าไม่มีให้ fallback ไปที่ order.total)
+                // 3. เรียกยอดเงินจริงจากคอลัมน์ price_paid ใน Supabase (ถ้าไม่มีให้ fallback ไปที่ order.total)
                 const displayTotal = (order as any).price_paid || order.total || 0;
 
                 return (
                   <tr key={order.id} className="border-b hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-4 text-sm font-mono text-gray-600">#{order.id}</td>
 
-                    {/* 🌟 4. ใส่ Optional Chaining (?.) กันข้อมูลลูกค้าพัง */}
+                    {/* 4. ใส่ Optional Chaining (?.) กันข้อมูลลูกค้าพัง */}
                     <td className="py-4 px-4">
                       <div className="font-semibold text-gray-800">{order.user?.name || "Unknown Customer"}</div>
                       <div className="text-xs text-gray-500">{order.user?.email || "No Email"}</div>
@@ -147,7 +148,7 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                       ))}
                     </td>
 
-                    {/* 🌟 5. แสดงยอดเงินสุทธิจากราวจ่ายจริงคู่กับแจงรายละเอียดค่าส่ง */}
+                    {/* 5. แสดงยอดเงินสุทธิจากราวจ่ายจริงคู่กับแจงรายละเอียดค่าส่ง */}
                     <td className="py-4 px-4">
                       <div className="font-bold text-amber-700">฿{Number(displayTotal).toFixed(2)}</div>
                       <div className="text-[10px] text-gray-400 font-normal leading-tight">
@@ -155,18 +156,21 @@ export function AdminTables({ orders, cookieSummary, availableProducts }: AdminT
                       </div>
                     </td>
 
+                    {/* 🌟 ปรับปรุงรหัสสีและข้อความให้รองรับสถานะ cancelled */}
                     <td className="py-4 px-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${
+                        order.status === "cancelled" ? "bg-red-100 text-red-700" :
                         order.status === "completed" ? "bg-green-100 text-green-700" :
-                          order.status === "preparing" ? "bg-blue-100 text-blue-700" :
-                            order.status === "pending" ? "bg-gray-100 text-gray-700" : 
-                              "bg-amber-100 text-amber-700"
-                        }`}>
+                        order.status === "preparing" ? "bg-blue-100 text-blue-700" :
+                        order.status === "pending" ? "bg-gray-100 text-gray-700" : 
+                        "bg-amber-100 text-amber-700"
+                      }`}>
                         {
+                          order.status === "cancelled" ? "Cancelled" :
                           order.status === "completed" ? "Shipped" :
-                            order.status === "preparing" ? "Baking" :
-                              order.status === "pending" ? "Pending" :
-                                "Paid"
+                          order.status === "preparing" ? "Baking" :
+                          order.status === "pending" ? "Pending" :
+                          "Paid"
                         }
                       </span>
                     </td>
