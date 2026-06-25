@@ -30,6 +30,12 @@ export function useCart() {
 
   const [shippingRates, setShippingRates] = useState({ standard: 40, bulk: 50 });
 
+  // 🔄 ฟังก์ชันภายในสำหรับล้างข้อมูล QR และ Order ID ค้างจ่าย เมื่อตะกร้ามีการเปลี่ยนแปลง
+  const clearPendingOrder = () => {
+    localStorage.removeItem("cookie-shop-qr-url");
+    localStorage.removeItem("cookie-shop-order-id");
+  };
+
   // จัดการ Sync ตะกร้าสินค้าลง LocalStorage ของเบราว์เซอร์
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
@@ -63,6 +69,9 @@ export function useCart() {
   }, []);
 
   const addToCart = async (item: CartItem) => {
+    // 💥 ล้างออเดอร์เก่าทันทีหากมีการแอดขนมเพิ่มชิ้นใหม่ (กันเคสยอดเงินเปลี่ยน)
+    clearPendingOrder();
+
     let updatedQuantity = 1;
     let finalPrice = item.price;
     const isCustom = item.id.includes('custom') || item.type === 'custom' || item.name.toLowerCase().includes('custom');
@@ -93,7 +102,6 @@ export function useCart() {
 
     const customerId = await getCustomerId();
     if (customerId) {
-      // ตรวจสอบโครงสร้างรสชาติ (flavor) ให้เป็น Array เสมอ เพื่อแมปเข้าคอลัมน์ _text ในตาราง cart_items
       let flavorArray: string[] = [];
       if (Array.isArray(item.flavor)) {
         flavorArray = item.flavor;
@@ -107,10 +115,10 @@ export function useCart() {
           customer_id: customerId,
           product_id: item.id,
           name: item.name,
-          price: Number(finalPrice), // 🌟 ตรวจสอบให้มั่นใจว่าเป็น Number ตรงตามประเภท numeric ใน DB
+          price: Number(finalPrice),
           quantity: updatedQuantity,
           texture: item.texture || '',
-          flavor: flavorArray,       // 🌟 ส่งค่าไปเป็น Array สอดคล้องกับคอลัมน์ _text
+          flavor: flavorArray,
           toppings: item.toppings || [],
           custom_message: item.custom_message || ''
         }, { onConflict: 'customer_id, product_id' });
@@ -122,6 +130,9 @@ export function useCart() {
   };
 
   const removeFromCart = async (itemId: string) => {
+    // 💥 ล้างออเดอร์เก่าทันทีหากผู้ใช้ลบสินค้าออกจากตะกร้า
+    clearPendingOrder();
+
     setCart(prevCart => prevCart.filter(item => item.id !== itemId));
 
     const customerId = await getCustomerId();
@@ -135,6 +146,9 @@ export function useCart() {
   };
 
   const updateQuantity = async (itemId: string, quantity: number) => {
+    // 💥 ล้างออเดอร์เก่าทันทีหากมีการปรับเพิ่ม/ลดจำนวนชิ้นในตะกร้า
+    clearPendingOrder();
+
     if (quantity <= 0) {
       removeFromCart(itemId);
       return;
@@ -170,7 +184,6 @@ export function useCart() {
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // คัดแยกนับเฉพาะคุกกี้หลัก (ไม่นับแถวท็อปปิ้งแยก)
   const cookieOnlyItems = cart
     .filter(item => !item.name.toLowerCase().includes('topping'))
     .reduce((sum, item) => sum + item.quantity, 0);

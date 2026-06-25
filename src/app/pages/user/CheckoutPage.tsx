@@ -6,17 +6,14 @@ import { useState, useEffect } from "react";
 import { UserInfo } from "../../types";
 import { supabase } from "../../../../backend/supabaseClient";
 
-// ✅ Declare env vars once at the top — fixes the red type errors throughout
 const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY as string;
 
-// ✅ Convert a File to base64 (without the data: prefix) for JSON transport
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // strip "data:image/png;base64," prefix, keep raw base64
       resolve(result.split(",")[1]);
     };
     reader.onerror = reject;
@@ -35,13 +32,19 @@ export function CheckoutPage() {
       : { name: "", email: "", address: "", phone: "" };
   });
 
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
-  const [orderId, setOrderId] = useState<number | null>(null); // ✅ bigint from DB = number
+  //localstorage for qr and order id
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>(() => {
+    return localStorage.getItem("cookie-shop-qr-url") || "";
+  });
+  const [orderId, setOrderId] = useState<number | null>(() => {
+    const storedId = localStorage.getItem("cookie-shop-order-id");
+    return storedId ? Number(storedId) : null;
+  });
+
   const [isGeneratingQr, setIsGeneratingQr] = useState<boolean>(false);
   const [isSubmittingSlip, setIsSubmittingSlip] = useState<boolean>(false);
   const [slipFile, setSlipFile] = useState<File | null>(null);
 
-  // ── Check if user is logged in + pre-fill info from Supabase ──
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -75,6 +78,12 @@ export function CheckoutPage() {
 
   const handleCheckout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
+    if (qrCodeUrl || orderId) {
+      toast.error("Order already placed. Please upload the payment slip.");
+      return;
+    }
+    
     if (!userInfo.name || !userInfo.email || !userInfo.address || !userInfo.phone) {
       toast.error("Please fill in all required fields");
       return;
@@ -95,7 +104,6 @@ export function CheckoutPage() {
 
       const grandTotal = totalPrice + shippingFee;
 
-      // ✅ Calls Supabase Edge Function
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/create-payment-qr`,
         {
@@ -113,7 +121,12 @@ export function CheckoutPage() {
 
       if (data.success) {
         setQrCodeUrl(data.qrCodeUrl);
-        setOrderId(Number(data.orderId)); // ✅ bigint arrives as number from edge function
+        setOrderId(Number(data.orderId));
+        
+        // 💾 เซฟลง LocalStorage กันเหนียวไว้ตรงนี้
+        localStorage.setItem("cookie-shop-qr-url", data.qrCodeUrl);
+        localStorage.setItem("cookie-shop-order-id", String(data.orderId));
+
         toast.success("PromptPay QR Generated!");
       } else {
         console.error("QR Generation error:", data);
@@ -150,7 +163,6 @@ export function CheckoutPage() {
         return;
       }
 
-      // ✅ Encode the slip image as base64 to send inside JSON body
       const slipBase64 = await fileToBase64(slipFile);
 
       const res = await fetch(`${SUPABASE_URL}/functions/v1/submit-slip`, {
@@ -163,15 +175,19 @@ export function CheckoutPage() {
         body: JSON.stringify({
           orderId,
           customerEmail: userInfo.email,
-          slip: slipBase64,           // ✅ base64 image data
+          slip: slipBase64,
           slipFileName: slipFile.name,
-          slipFileType: slipFile.type, // e.g. "image/png"
+          slipFileType: slipFile.type,
         }),
       });
 
       const data = await res.json();
 
       if (data.success) {
+        // จ่ายเงินสำเร็จแล้วล้างข้อมูลใน localStorage 
+        localStorage.removeItem("cookie-shop-qr-url");
+        localStorage.removeItem("cookie-shop-order-id");
+
         await clearCart();
         toast.success("Payment confirmed successfully!");
         navigate("/success", { replace: true });
@@ -309,10 +325,10 @@ export function CheckoutPage() {
               />
 
               <p className="text-xs text-gray-400">
-                สแกนจ่ายได้ด้วยแอปธนาคารทุกแอป <br />
-                ยอดเงินถูกตั้งค่าไว้ที่{" "}
+                support with PromptPay <br />
+                total:{" "}
                 <b className="text-gray-700">฿{(totalPrice + shippingFee).toFixed(2)}</b>{" "}
-                เรียบร้อยแล้ว
+                successfully generated <br />
               </p>
 
               {/* Slip Upload Form */}

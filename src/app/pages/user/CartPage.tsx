@@ -21,7 +21,7 @@ export function CartPage() {
       if (data && data.length > 0) {
         const formattedCart = data.map((item: any) => ({
           ...item,
-          id: item.product_id, // Map product_id กลับมาเป็น id ให้ตรงกับ Interface ของเรา
+          id: item.product_id, 
         }));
         setCart(formattedCart);
       }
@@ -58,7 +58,6 @@ export function CartPage() {
             className="p-6 border-b last:border-b-0 flex flex-col items-between justify-center gap-3"
           >
             <div className = "flex flex-row items-center gap-4">
-              {/* ฝั่งซ้าย: รวมชื่อ รายละเอียด และปุ่มเพิ่ม/ลดไว้ด้วยกันแบบแนวตั้ง (flex-col) */}
               <div className="flex-1 min-w-0 flex flex-col gap-4">
                 <div>
                   <h3 className="text-lg mb-1 font-medium">{item.name}</h3>
@@ -68,17 +67,21 @@ export function CartPage() {
                 </div>
                 
 
-                {/* ปุ่มเพิ่ม/ลดจำนวน อยู่ด้านล่างรายละเอียดสินค้า */}
+                {/* ปุ่มเพิ่ม/ลดจำนวน */}
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    onClick={() => {
+                      updateQuantity(item.id, item.quantity - 1);
+                    }}
                     className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
                   <span className="w-8 text-center font-medium">{item.quantity}</span>
                   <button
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => {
+                      updateQuantity(item.id, item.quantity + 1);
+                    }}
                     className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
@@ -94,7 +97,9 @@ export function CartPage() {
                   </span>
                 </div>
                 <button
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => {
+                    removeFromCart(item.id);
+                  }}
                   className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
                   title="ลบสินค้า"
                 >
@@ -106,9 +111,7 @@ export function CartPage() {
               <div className="self-start w-full mt-4">
                 <p className="font-medium mb-1">Card Message: </p>
                 <div className="text-sm text-gray-500 rounded-sm border border-gray-200 px-3 py-1 text-pretty break-words whitespace-pre-wrap">
-                  
-                    <p className="text-amber-600 italic">{item.custom_message}</p>
-                  
+                  <p className="text-amber-600 italic">{item.custom_message}</p>
                 </div>
               </div>
             )}

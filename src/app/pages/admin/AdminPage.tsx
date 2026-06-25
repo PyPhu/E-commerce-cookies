@@ -263,27 +263,7 @@ const flavorData = thisWeekOrders.reduce((acc, order) => {
             </ChartCard>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ChartCard title="Cookie Types Sold">
-              <PieChart>
-                <Pie data={cookieTypeData} cx="50%" cy="50%" outerRadius={80} dataKey="count" label={({ name }) => name}>
-                  {cookieTypeData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ChartCard>
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl mb-4 font-semibold text-gray-800">Flavors to Make This Week</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {flavorData.slice(0, 4).map((f: any) => (
-                  <div key={f.flavor} className="bg-amber-50 p-4 rounded-lg text-center border border-amber-100">
-                    <p className="text-sm capitalize text-gray-600">{f.flavor}</p>
-                    <p className="text-2xl font-bold text-amber-600">{f.count}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          
         </div>
       ) : (
         <div className="animate-in slide-in-from-bottom-4 duration-500">

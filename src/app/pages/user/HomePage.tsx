@@ -11,7 +11,7 @@ export function HomePage() {
   const { addToCart } = useCart();
   const [menuCookies, setMenuCookies] = useState<MenuItemWithImage[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   //  URL ของรูปที่ต้องการเปิดดูขนาดใหญ่
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -20,7 +20,9 @@ export function HomePage() {
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("show", true);
+        .eq("show", true)
+        .neq("item", "Shipping Standard (<=10)")
+        .neq("item", "Shipping Bulk (>10)");
 
       if (error) {
         toast.error("Failed to load menu");
@@ -29,9 +31,17 @@ export function HomePage() {
       }
 
       const mapped: MenuItemWithImage[] = data.map((p) => {
-        const { data: storageData } = supabase.storage
-          .from("cookie_images")
-          .getPublicUrl(p.image_url);
+        // สร้างตัวแปรเก็บ URL เริ่มต้นเป็น undefined
+        let publicUrl: string | undefined = undefined;
+
+        //  เช็กว่า p.image_url ไม่เป็น null หรือ string ว่าง
+        if (p.image_url) {
+          const { data: storageData } = supabase.storage
+            .from("cookie_images")
+            .getPublicUrl(p.image_url);
+
+          publicUrl = storageData?.publicUrl;
+        }
 
         return {
           id: String(p.id),
@@ -41,7 +51,7 @@ export function HomePage() {
           texture: p.texture,
           flavor: p.flavor ?? '',
           toppings: p.toppings,
-          image: p.image_url ? storageData.publicUrl : undefined,
+          image: publicUrl,
         };
       });
 
@@ -54,7 +64,6 @@ export function HomePage() {
 
   const handleAddToCart = (cookie: MenuItem) => {
     addToCart(cookie);
-    console.log(`Added to cart: ${cookie.toppings?.join(", ")} ${cookie.name} (ID: ${cookie.id})`);
     toast.success(`Added ${cookie.name} to cart!`);
   };
 
@@ -77,7 +86,7 @@ export function HomePage() {
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* cursor-pointer และ onClick */}
-              <div 
+              <div
                 className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center overflow-hidden cursor-pointer group relative"
                 onClick={() => cookie.image && setSelectedImage(cookie.image)}
               >
@@ -133,7 +142,7 @@ export function HomePage() {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in"
           onClick={() => setSelectedImage(null)} // กดพื้นที่ว่างด้านนอกเพื่อปิด
         >
@@ -145,7 +154,7 @@ export function HomePage() {
             >
               <X className="w-6 h-6" />
             </button>
-            
+
             {/* รูปภาพขนาดใหญ่ */}
             <img
               src={selectedImage}

@@ -1,6 +1,7 @@
 import { Outlet, Link } from "react-router";
 import { ShoppingCart, Cookie, User, LayoutDashboard } from "lucide-react";
 import { useAuth } from "./AdminAuth";
+import Logo from "../pages/user/img/Logo.png";
 
 export function UserLayout() {
   const { isAdmin } = useAuth(); // 2. ดึงค่าสถานะ isAdmin ออกมาจากระบบส่วนกลาง
@@ -10,7 +11,7 @@ export function UserLayout() {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-[#fff4e9] shadow gm-0 sticky top-0 z-10">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <Cookie className="w-6 h-6" />
+          <img src={Logo} alt="cookiekamin logo" className="w-10 h-10 rounded-full object-contain " />
           <span className="text-2xl font-bold">cookiekamin</span>
         </Link>
 
