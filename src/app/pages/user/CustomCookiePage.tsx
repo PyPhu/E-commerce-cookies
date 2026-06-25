@@ -110,7 +110,7 @@ export function CustomCookiePage() {
 
       const customCookie = {
         id: String(data?.id),
-        name: "Custom Cookie",
+        name: "Custom Cookie Set (10 pcs)",
         type: "custom",
         price: 399,
         texture: texture,
