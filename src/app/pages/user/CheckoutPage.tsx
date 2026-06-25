@@ -181,7 +181,6 @@ export function CheckoutPage() {
           "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
-          orderId,
           customerEmail: userInfo.email,
           slip: slipBase64,
           slipFileName: slipFile.name,
