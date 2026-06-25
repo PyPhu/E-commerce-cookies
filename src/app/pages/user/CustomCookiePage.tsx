@@ -99,7 +99,7 @@ export function CustomCookiePage() {
       return;
     }
 
-    const { data } = await supabase.from('products').select('id').eq('item', 'Custom Cookie').single();
+    const { data } = await supabase.from('products').select('id').ilike('item', '%custom cookie%').single();
 
     if (!data) {
       toast.error("Error connecting to the database. Please try again later.");
