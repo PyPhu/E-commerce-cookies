@@ -146,10 +146,7 @@ export function CheckoutPage() {
       toast.error("Please select your transaction slip image");
       return;
     }
-    if (!orderId) {
-      toast.error("Order ID missing, please try again");
-      return;
-    }
+   
 
     setIsSubmittingSlip(true);
 
