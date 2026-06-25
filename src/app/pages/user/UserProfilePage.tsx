@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";
 import { OrderHistory } from "./OrderHistory"; // ✨ Import Component ที่แยกออกมา
+import { useEffect } from "react";
 
 const USER_STORAGE_KEY = 'cookie-shop-user';
 
@@ -86,6 +87,36 @@ export function UserProfilePage() {
       console.error("Logout error:", error);
     }
   };
+
+  // end session supabase
+  useEffect(() => {
+    // ฟังก์ชันเช็คสถานะเบื้องต้นทันทีที่เข้าหน้าเว็บ
+    const checkInitialAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No initial session found — Clearing storage");
+        // ลบข้อมูลผู้ใช้ใน LocalStorage ทันทีหากเปิดมาแล้วไม่มี Session
+        localStorage.removeItem("cookie-shop-user");
+      }
+    };
+    checkInitialAuth();
+
+    // ดักฟัง Event ตลอดเวลา
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้น:", event);
+
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session expired or Signed Out — Clearing storage");
+      
+        // ลบข้อมูลใน LocalStorage 
+        localStorage.removeItem("cookie-shop-user");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">

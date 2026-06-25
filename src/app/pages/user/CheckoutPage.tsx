@@ -25,37 +25,36 @@ export function CheckoutPage() {
   const navigate = useNavigate();
   const { cart, totalPrice, shippingFee, clearCart } = useCart();
 
-  const [userInfo, setUserInfo] = useState<UserInfo>(() => {
-    const stored = localStorage.getItem("cookie-shop-user");
-    return stored
-      ? JSON.parse(stored)
-      : { name: "", email: "", address: "", phone: "" };
+  // ข้อมูลโปรไฟล์เริ่มต้นเป็นค่าว่าง (จะโหลดจาก Database มาหยอดให้ใน useEffect)
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    name: "",
+    email: "",
+    address: "",
+    phone: "",
+    role: "user",
   });
 
-  //localstorage for qr and order id
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>(() => {
-    return localStorage.getItem("cookie-shop-qr-url") || "";
-  });
-  const [orderId, setOrderId] = useState<number | null>(() => {
-    const storedId = localStorage.getItem("cookie-shop-order-id");
-    return storedId ? Number(storedId) : null;
-  });
+  // เปลี่ยนมาเก็บค่าไว้แค่ใน React State ชั่วคราว (ไม่ยุ่งกับ LocalStorage แล้ว)
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+  const [orderId, setOrderId] = useState<number | null>(null);
 
   const [isGeneratingQr, setIsGeneratingQr] = useState<boolean>(false);
   const [isSubmittingSlip, setIsSubmittingSlip] = useState<boolean>(false);
   const [slipFile, setSlipFile] = useState<File | null>(null);
 
+  // useEffect ตัวที่ 1: ตรวจสอบ Auth และดึงข้อมูลจาก Supabase ทุกครั้งที่เข้าหน้าเว็บ
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // ถ้าไม่มี Session ตั้งแต่แรก ให้เตือนแล้วดีดกลับหน้า Home ตามต้องการ
       if (!session) {
         toast.error("Please sign in to continue checkout");
-        navigate("/login", { replace: true, state: { from: "/checkout" } });
+        navigate("/", { replace: true });
         return;
       }
 
+      // ดึงข้อมูลลูกค้าจาก Database โดยตรงแบบสดใหม่
       const { data: profile } = await supabase
         .from("customers")
         .select("*")
@@ -63,18 +62,38 @@ export function CheckoutPage() {
         .single();
 
       if (profile) {
-        const loaded: UserInfo = {
+        setUserInfo({
           name: profile.name || "",
           email: profile.email || session.user.email || "",
           phone: profile.phone || "",
           address: profile.address || "",
           role: "user",
-        };
-        setUserInfo(loaded);
+        });
       }
     };
     checkAuth();
-  }, []);
+  }, [navigate]);
+
+  //  ดักฟัง Session Expired ระหว่างเปิดหน้าเว็บทิ้งไว้
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้นใน Checkout:", event);
+
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session หมดอายุ — กำลังพากลับหน้าหลัก");
+        // ล้างข้อมูลโปรไฟล์ใน LocalStorage ที่อาจค้างอยู่จากหน้าอื่นทิ้ง
+        localStorage.removeItem("cookie-shop-user");
+        
+        toast.error("Your session has expired. Returning to homepage.");
+        
+        navigate("/", { replace: true });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleCheckout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -89,21 +108,19 @@ export function CheckoutPage() {
       return;
     }
 
-    localStorage.setItem("cookie-shop-user", JSON.stringify(userInfo));
     setIsGeneratingQr(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Session expired, please sign in again");
-        navigate("/login", { state: { from: "/checkout" } });
+        navigate("/", { replace: true });
         return;
       }
 
       const grandTotal = totalPrice + shippingFee;
 
+      // ส่งข้อมูลให้เพื่อนนำไปปรับปรุงตาม Flow ที่คุยกันไว้
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/create-payment-qr`,
         {
@@ -120,13 +137,9 @@ export function CheckoutPage() {
       const data = await res.json();
 
       if (data.success) {
+        // เซฟค่าเก็บไว้แค่ใน React State เพื่อใช้แสดงผลรูป QR ในคอมโพเนนต์เฉยๆ
         setQrCodeUrl(data.qrCodeUrl);
         setOrderId(Number(data.orderId));
-        
-        // 💾 เซฟลง LocalStorage กันเหนียวไว้ตรงนี้
-        localStorage.setItem("cookie-shop-qr-url", data.qrCodeUrl);
-        localStorage.setItem("cookie-shop-order-id", String(data.orderId));
-
         toast.success("PromptPay QR Generated!");
       } else {
         console.error("QR Generation error:", data);
@@ -146,20 +159,15 @@ export function CheckoutPage() {
       toast.error("Please select your transaction slip image");
       return;
     }
-    if (!orderId) {
-      toast.error("Order ID missing, please try again");
-      return;
-    }
+   
 
     setIsSubmittingSlip(true);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Session expired, please sign in again");
-        navigate("/login", { state: { from: "/checkout" } });
+        navigate("/", { replace: true });
         return;
       }
 
@@ -173,21 +181,18 @@ export function CheckoutPage() {
           "apikey": SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
-          orderId,
           customerEmail: userInfo.email,
           slip: slipBase64,
           slipFileName: slipFile.name,
           slipFileType: slipFile.type,
+
         }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        // จ่ายเงินสำเร็จแล้วล้างข้อมูลใน localStorage 
-        localStorage.removeItem("cookie-shop-qr-url");
-        localStorage.removeItem("cookie-shop-order-id");
-
+        // เคลียร์ค่าตะกร้า และไปหน้า success
         await clearCart();
         toast.success("Payment confirmed successfully!");
         navigate("/success", { replace: true });
