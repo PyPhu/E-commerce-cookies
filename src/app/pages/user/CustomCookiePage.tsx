@@ -87,6 +87,32 @@ export function CustomCookiePage() {
     fetchData();
   }, []);
 
+  // end session supabase
+  useEffect(() => {
+    // เช็คทันทีตอนโหลดหน้าเว็บขึ้นมา
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No initial session found");
+        navigate("/login");
+      }
+    };
+    checkInitialSession();
+
+    // ดักฟังการเปลี่ยนแปลงหลังจากนั้น
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้น:", event);
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session expired");
+        navigate("/login"); 
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
   const handleAddToCart = async () => {
     // ดักจับเผื่อไว้กรณีร้านปิดไม่ให้รันฟังก์ชันแอดของลงตะกร้า
     if (isShopClosed) {

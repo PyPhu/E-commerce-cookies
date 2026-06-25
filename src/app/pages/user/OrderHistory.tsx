@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "../../../../backend/supabaseClient";
 import { toast } from "sonner";
+import { useNavigate } from "react-router";
 
 interface OrderHistoryProps {
   email: string;
@@ -13,6 +14,8 @@ export function OrderHistory({ email }: OrderHistoryProps) {
   const [totalOrders, setTotalOrders] = useState(0);
   const [userOrders, setUserOrders] = useState<any[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchOrderHistory() {
@@ -87,6 +90,32 @@ export function OrderHistory({ email }: OrderHistoryProps) {
 
     fetchOrderHistory();
   }, [email, currentPage]);
+
+  // end session supabase
+  useEffect(() => {
+    // เช็คทันทีตอนโหลดหน้าเว็บขึ้นมา
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No initial session found");
+        navigate("/login");
+      }
+    };
+    checkInitialSession();
+
+    // ดักฟังการเปลี่ยนแปลงหลังจากนั้น
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้น:", event);
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session expired");
+        navigate("/login"); 
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const totalPages = Math.ceil(totalOrders / ITEM_PAGE);
 

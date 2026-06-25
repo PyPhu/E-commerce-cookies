@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { LogIn, UserPlus, LogOut, User } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";
-
+import { useCart } from "../../../hooks/useCart"; // 1. ดึง Hook ตะกร้าเข้ามา
 
 type Tab = "login" | "signup";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>("login");
+
+  // ดึงค่า cart ออกมาใช้งาน
+  const { cart } = useCart();
 
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
@@ -22,13 +25,43 @@ export function LoginPage() {
   const [signupAddress, setSignupAddress] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
+  // ฟังก์ชันช่วยเหลือสำหรับ Merge ตะกร้าชั่วคราวขึ้น Database
+  const mergeCartToDatabase = async (userId: string) => {
+    if (cart.length === 0) return;
+
+    try {
+      // แปลงข้อมูลรูปแบบ frontend เป็นรูปแบบที่จะบันทึกลง table 'cart_items'
+      const itemsToSync = cart.map((item) => ({
+        customer_id: userId,
+        product_id: item.id, // ใช้ไอดีสินค้าตามที่บันทึก
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        texture: item.texture,
+        flavor: item.flavor,
+        toppings: item.toppings,
+        custom_message: item.custom_message,
+      }));
+
+      // ทำการ upsert (หากสินค้าเดิมเคยมีในตะกร้าของผู้ใช้นี้แล้ว จะอัปเดตทับ)
+      const { error: mergeError } = await supabase
+        .from("cart_items")
+        .upsert(itemsToSync);
+
+      if (mergeError) throw mergeError;
+      console.log("Merged guest cart to database successfully!");
+    } catch (err) {
+      console.error("Error merging cart:", err);
+    }
+  };
+
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
       password: loginPassword,
     });
@@ -36,6 +69,13 @@ export function LoginPage() {
     if (error) {
       toast.error("Login failed: " + error.message);
       return;
+    }
+
+    const userId = authData.user?.id;
+
+    if (userId) {
+      // 3. เรียกฟังก์ชันย้ายของในตะกร้าชั่วคราวขึ้น Database ทันทีหลัง Login สำเร็จ
+      await mergeCartToDatabase(userId);
     }
 
     // Fetch profile from Supabase and save to localStorage
@@ -77,11 +117,13 @@ export function LoginPage() {
       return;
     }
 
+    const userId = authData.user?.id;
+
     const { error: profileError } = await supabase
       .from("customers")
       .upsert(
         {
-          id: authData.user?.id, // ใช้ user ID จาก Supabase
+          id: userId,
           name: signupName,
           email: signupEmail,
           phone: signupPhone,
@@ -93,6 +135,11 @@ export function LoginPage() {
     if (profileError) {
       toast.error("Profile save failed: " + profileError.message);
       return;
+    }
+
+    if (userId) {
+      // 4. เรียกฟังก์ชันย้ายของในตะกร้าชั่วคราวขึ้น Database ทันทีหลัง สมัครสมาชิก สำเร็จ
+      await mergeCartToDatabase(userId);
     }
 
     // Save user info to localStorage
@@ -109,7 +156,6 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#FAF4EC", fontFamily: "'Inter', sans-serif" }}>
-
       {/* Content */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "2.5rem 1rem" }}>
         <div

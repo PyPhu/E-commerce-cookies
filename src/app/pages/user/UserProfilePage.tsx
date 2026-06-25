@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "../../../../backend/supabaseClient";
 import { useNavigate } from "react-router";
 import { OrderHistory } from "./OrderHistory"; // ✨ Import Component ที่แยกออกมา
+import { useEffect } from "react";
 
 const USER_STORAGE_KEY = 'cookie-shop-user';
 
@@ -86,6 +87,32 @@ export function UserProfilePage() {
       console.error("Logout error:", error);
     }
   };
+
+  // end session supabase
+  useEffect(() => {
+    // เช็คทันทีตอนโหลดหน้าเว็บขึ้นมา
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No initial session found");
+        navigate("/login");
+      }
+    };
+    checkInitialSession();
+
+    // ดักฟังการเปลี่ยนแปลงหลังจากนั้น
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้น:", event);
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session expired");
+        navigate("/login"); 
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">

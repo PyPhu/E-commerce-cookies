@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Cookie, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../backend/supabaseClient";
+import { useNavigate, Link } from "react-router";
 
 type MenuItemWithImage = MenuItem & { image?: string };
 
@@ -11,10 +12,10 @@ export function HomePage() {
   const { addToCart } = useCart();
   const [menuCookies, setMenuCookies] = useState<MenuItemWithImage[]>([]);
   const [loading, setLoading] = useState(true);
-
-  //  URL ของรูปที่ต้องการเปิดดูขนาดใหญ่
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const navigate = useNavigate();
 
+  // useEffect ตัวที่ 1: ดึงข้อมูลเมนู
   useEffect(() => {
     const fetchMenu = async () => {
       const { data, error } = await supabase
@@ -31,10 +32,8 @@ export function HomePage() {
       }
 
       const mapped: MenuItemWithImage[] = data.map((p) => {
-        // สร้างตัวแปรเก็บ URL เริ่มต้นเป็น undefined
         let publicUrl: string | undefined = undefined;
 
-        //  เช็กว่า p.image_url ไม่เป็น null หรือ string ว่าง
         if (p.image_url) {
           const { data: storageData } = supabase.storage
             .from("cookie_images")
@@ -67,6 +66,35 @@ export function HomePage() {
     toast.success(`Added ${cookie.name} to cart!`);
   };
 
+  // end session supabase 
+  useEffect(() => {
+    // ฟังก์ชันเช็คสถานะเบื้องต้นทันทีที่เข้าหน้าเว็บ
+    const checkInitialAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session && window.location.pathname !== "/login") {
+        navigate("/login");
+      }
+    };
+    checkInitialAuth();
+
+    // ดักฟัง Event ตลอดเวลา
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้น:", event);
+
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session expired");
+        // prevent loop navigate
+        if (window.location.pathname !== "/login") {
+          navigate("/login"); 
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="text-center mb-12">
@@ -85,7 +113,6 @@ export function HomePage() {
               key={cookie.id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
-              {/* cursor-pointer และ onClick */}
               <div
                 className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center overflow-hidden cursor-pointer group relative"
                 onClick={() => cookie.image && setSelectedImage(cookie.image)}
@@ -97,11 +124,10 @@ export function HomePage() {
                       alt={cookie.name}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
-                    {/* เพิ่ม Overlay เล็กน้อยตอนเอาเมาส์มาวางให้รู้ว่ากดขยายได้ */}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium text-sm">
                       Click to view
                     </div>
-                  </>
+                  </                  >
                 ) : (
                   <Cookie className="w-12 h-12 text-amber-600" />
                 )}
@@ -132,22 +158,22 @@ export function HomePage() {
         <p className="text-gray-600 mb-6">
           Create your own unique cookie with your choice of texture and flavors!
         </p>
-        <a
-          href="/custom-cookie"
+        {/* 3. เปลี่ยนจาก <a> เป็น <Link> เพื่อประสิทธิภาพที่ดีขึ้น */}
+        <Link
+          to="/custom-cookie"
           className="inline-block bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700"
         >
           Build Your Cookie
-        </a>
+        </Link>
       </div>
 
       {/* Image Modal */}
       {selectedImage && (
         <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in"
-          onClick={() => setSelectedImage(null)} // กดพื้นที่ว่างด้านนอกเพื่อปิด
+          onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-w-4xl max-h-[85vh] bg-white rounded-lg  overflow-hidden shadow-2xl">
-            {/* ปุ่มปิด Modal */}
+          <div className="relative max-w-4xl max-h-[85vh] bg-white rounded-lg overflow-hidden shadow-2xl">
             <button
               onClick={() => setSelectedImage(null)}
               className="absolute top-4 right-4 bg-black/60 text-white p-2 rounded-full hover:bg-black/80 transition-colors z-10"
@@ -155,12 +181,11 @@ export function HomePage() {
               <X className="w-6 h-6" />
             </button>
 
-            {/* รูปภาพขนาดใหญ่ */}
             <img
               src={selectedImage}
               alt="Cookie preview"
               className="max-w-full max-h-[80vh] object-contain rounded"
-              onClick={(e) => e.stopPropagation()} // บล็อกไม่ให้กดที่ตัวรูปภาพแล้ว Modal ปิด
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
