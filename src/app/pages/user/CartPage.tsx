@@ -29,6 +29,35 @@ export function CartPage() {
     loadCartData();
   }, [setCart]);
 
+  // end session supabase
+  useEffect(() => {
+    // เช็คทันทีตอนโหลดหน้าเว็บขึ้นมา
+    const checkInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No initial session found — Clearing storage");
+        localStorage.removeItem("cookie-shop-user");
+        setCart([]); // เคลียร์ UI ตะกร้าให้ว่างเปล่า
+      }
+    };
+    checkInitialSession();
+
+    // ดักฟังการเปลี่ยนแปลงหลังจากนั้น
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้น:", event);
+      if (event === 'SIGNED_OUT' || !session) {
+        console.log("Session expired — Clearing storage");
+        localStorage.removeItem("cookie-shop-user");
+        setCart([]); // เคลียร์ UI ตะกร้าทันทีเมื่อ Session หลุด
+
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [setCart]);
+
   if (cart.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
