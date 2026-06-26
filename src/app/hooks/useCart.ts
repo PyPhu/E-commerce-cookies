@@ -189,7 +189,7 @@ if (customerId) {
 
   const cookieOnlyItems = cart
     .filter(item => !item.name.toLowerCase().includes('topping'))
-    .reduce((sum, item) => sum + item.quantity, 0);
+    .reduce((sum, item) => sum + (item.name.includes('Custom Cookie') ? item.quantity * 10 : item.quantity), 0);
 
   const shippingFee = cookieOnlyItems === 0
     ? 0

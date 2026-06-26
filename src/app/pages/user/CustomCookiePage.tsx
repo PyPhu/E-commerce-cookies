@@ -113,12 +113,18 @@ export function CustomCookiePage() {
       return;
     }
 
+    const { data } = await supabase.from('products').select('id').ilike('item', '%custom cookie%').single();
+
+    if (!data) {
+      toast.error("Error connecting to the database. Please try again later.");
+      return;
+    }
+
     try {
-      const uniqueId = `custom-${Date.now()}`;
 
       const customCookie = {
-        id: uniqueId,
-        name: "Custom Cookie",
+        id: String(data?.id),
+        name: "Custom Cookie Set (10 pcs)",
         type: "custom",
         price: 399,
         texture: texture,
