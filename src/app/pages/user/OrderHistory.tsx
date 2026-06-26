@@ -134,7 +134,7 @@ export function OrderHistory({ email }: OrderHistoryProps) {
                     {new Date(order.created_at).toLocaleDateString()} at {new Date(order.created_at).toLocaleTimeString()}
                   </p>
                   {order.tracking_number && (
-                    <p className="text-sm text-gray-500 mt-1">Tracking Number: {order.tracking_number}</p>
+                    <p className="text-sm text-gray-500 mt-1">Tracking Number of KEX express: {order.tracking_number}</p>
                   )}
                 </div>
 
