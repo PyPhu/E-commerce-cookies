@@ -68,32 +68,18 @@ export function HomePage() {
 
   // end session supabase 
   useEffect(() => {
-    // ฟังก์ชันเช็คสถานะเบื้องต้นทันทีที่เข้าหน้าเว็บ
-    const checkInitialAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session && window.location.pathname !== "/login") {
-        navigate("/login");
-      }
-    };
-    checkInitialAuth();
+  // ดักฟังการเปลี่ยนแปลงสถานะระบบ
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // เช็คเฉพาะเมื่อผู้ใช้ "ตั้งใจกดออกจากระบบ" 
+    if (event === 'SIGNED_OUT') {
+      localStorage.removeItem("cookie-shop-user");
+    }
+  });
 
-    // ดักฟัง Event ตลอดเวลา
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth Event เกิดขึ้น:", event);
-
-      if (event === 'SIGNED_OUT' || !session) {
-        console.log("Session expired");
-        // prevent loop navigate
-        if (window.location.pathname !== "/login") {
-          navigate("/login"); 
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">

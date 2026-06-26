@@ -91,6 +91,8 @@ export function OrderDetailsModal({ isOpen, onClose, cardName, filteredOrders, s
     }
   };
 
+  
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">

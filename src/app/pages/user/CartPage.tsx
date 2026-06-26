@@ -31,32 +31,18 @@ export function CartPage() {
 
   // end session supabase
   useEffect(() => {
-    // เช็คทันทีตอนโหลดหน้าเว็บขึ้นมา
-    const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log("No initial session found — Clearing storage");
-        localStorage.removeItem("cookie-shop-user");
-        setCart([]); // เคลียร์ UI ตะกร้าให้ว่างเปล่า
-      }
-    };
-    checkInitialSession();
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // เช็คเฉพาะตอนกด SIGNED_OUT 
+    if (event === 'SIGNED_OUT') {
+      localStorage.removeItem("cookie-shop-user");
+      setCart([]); // ล้างตะกร้าเมื่อจงใจออกจากระบบจริงๆ
+    }
+  });
 
-    // ดักฟังการเปลี่ยนแปลงหลังจากนั้น
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth Event เกิดขึ้น:", event);
-      if (event === 'SIGNED_OUT' || !session) {
-        console.log("Session expired — Clearing storage");
-        localStorage.removeItem("cookie-shop-user");
-        setCart([]); // เคลียร์ UI ตะกร้าทันทีเมื่อ Session หลุด
-
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [setCart]);
+  return () => {
+    subscription.unsubscribe();
+  };
+}, [setCart]);
 
   if (cart.length === 0) {
     return (

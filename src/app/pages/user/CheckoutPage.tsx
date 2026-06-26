@@ -50,7 +50,7 @@ export function CheckoutPage() {
       // ถ้าไม่มี Session ตั้งแต่แรก ให้เตือนแล้วดีดกลับหน้า Home ตามต้องการ
       if (!session) {
         toast.error("Please sign in to continue checkout");
-        navigate("/", { replace: true });
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -77,10 +77,7 @@ export function CheckoutPage() {
   //  ดักฟัง Session Expired ระหว่างเปิดหน้าเว็บทิ้งไว้
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth Event เกิดขึ้นใน Checkout:", event);
-
       if (event === 'SIGNED_OUT' || !session) {
-        console.log("Session หมดอายุ — กำลังพากลับหน้าหลัก");
         // ล้างข้อมูลโปรไฟล์ใน LocalStorage ที่อาจค้างอยู่จากหน้าอื่นทิ้ง
         localStorage.removeItem("cookie-shop-user");
         

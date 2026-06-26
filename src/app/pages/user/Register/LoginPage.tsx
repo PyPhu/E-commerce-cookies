@@ -27,33 +27,51 @@ export function LoginPage() {
 
   // ฟังก์ชันช่วยเหลือสำหรับ Merge ตะกร้าชั่วคราวขึ้น Database
   const mergeCartToDatabase = async (userId: string) => {
-    if (cart.length === 0) return;
+  if (cart.length === 0) return;
 
-    try {
-      // แปลงข้อมูลรูปแบบ frontend เป็นรูปแบบที่จะบันทึกลง table 'cart_items'
-      const itemsToSync = cart.map((item) => ({
-        customer_id: userId,
-        product_id: item.id, // ใช้ไอดีสินค้าตามที่บันทึก
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        texture: item.texture,
-        flavor: item.flavor,
-        toppings: item.toppings,
-        custom_message: item.custom_message,
-      }));
+  try {
+    const itemsToSync = cart.map((item) => {
+  // 1. จัดการ Flavor
+  let flavorArray: string[] = [];
+  if (Array.isArray(item.flavor)) {
+    flavorArray = item.flavor;
+  } else if (item.flavor) {
+    flavorArray = [item.flavor as string];
+  }
 
-      // ทำการ upsert (หากสินค้าเดิมเคยมีในตะกร้าของผู้ใช้นี้แล้ว จะอัปเดตทับ)
-      const { error: mergeError } = await supabase
-        .from("cart_items")
-        .upsert(itemsToSync);
+  let toppingsArray: string[] = [];
+  if (Array.isArray(item.toppings)) {
+    toppingsArray = item.toppings;
+  } else if (item.toppings) {
+    toppingsArray = [item.toppings as string];
+  }
 
-      if (mergeError) throw mergeError;
-      console.log("Merged guest cart to database successfully!");
-    } catch (err) {
-      console.error("Error merging cart:", err);
-    }
+  const isCustom = item.type === 'custom' || String(item.id).includes('custom');
+  const dbProductId = isCustom ? 3 : Number(item.id); 
+
+  return {
+    customer_id: userId,
+    product_id: dbProductId, 
+    name: item.name,
+    price: Number(item.price),
+    quantity: item.quantity,
+    texture: item.texture || '',
+    flavor: flavorArray,
+    toppings: toppingsArray,
+    custom_message: item.custom_message || '',
   };
+});
+
+    const { error: mergeError } = await supabase
+      .from("cart_items")
+      .upsert(itemsToSync, { onConflict: 'customer_id, product_id' });
+
+    if (mergeError) throw mergeError;
+
+  } catch (err) {
+    console.error("Error merging cart:", err);
+  }
+};
 
   const handleLogin = async () => {
     if (!loginEmail || !loginPassword) {

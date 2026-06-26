@@ -89,21 +89,9 @@ export function CustomCookiePage() {
 
   // end session supabase
   useEffect(() => {
-    // เช็คทันทีตอนโหลดหน้าเว็บขึ้นมา
-    const checkInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log("No initial session found");
-        navigate("/login");
-      }
-    };
-    checkInitialSession();
-
-    // ดักฟังการเปลี่ยนแปลงหลังจากนั้น
+    // ดักฟังการเปลี่ยนแปลงสถานะระบบ
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth Event เกิดขึ้น:", event);
-      if (event === 'SIGNED_OUT' || !session) {
-        console.log("Session expired");
+      if (event === 'SIGNED_OUT') {
         navigate("/login"); 
       }
     });

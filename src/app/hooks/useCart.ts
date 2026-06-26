@@ -101,36 +101,39 @@ export function useCart() {
     });
 
     const customerId = await getCustomerId();
-    if (customerId) {
-      let flavorArray: string[] = [];
-      if (Array.isArray(item.flavor)) {
-        flavorArray = item.flavor;
-      } else if (item.flavor) {
-        flavorArray = [item.flavor as string];
-      }
+if (customerId) {
+  let flavorArray: string[] = [];
+  if (Array.isArray(item.flavor)) {
+    flavorArray = item.flavor;
+  } else if (item.flavor) {
+    flavorArray = [item.flavor as string];
+  }
 
-      const { error } = await supabase
-        .from('cart_items')
-        .upsert({
-          customer_id: customerId,
-          product_id: item.id,
-          name: item.name,
-          price: Number(finalPrice),
-          quantity: updatedQuantity,
-          texture: item.texture || '',
-          flavor: flavorArray,
-          toppings: item.toppings || [],
-          custom_message: item.custom_message || ''
-        }, { onConflict: 'customer_id, product_id' });
+  // เช็คเงื่อนไขไอดีสำหรับสินค้า Custom ในระบบ useCart ด้วยเช่นกัน
+  const dbProductId = isCustom ? 3 : Number(item.id); // 
 
-      if (error) {
-        console.error("❌ DB sync error:", error.message);
-      }
-    }
+  const { error } = await supabase
+    .from('cart_items')
+    .upsert({
+      customer_id: customerId,
+      product_id: dbProductId, 
+      name: item.name,
+      price: Number(finalPrice),
+      quantity: updatedQuantity,
+      texture: item.texture || '',
+      flavor: flavorArray,
+      toppings: item.toppings || [],
+      custom_message: item.custom_message || ''
+    }, { onConflict: 'customer_id, product_id' });
+
+  if (error) {
+    console.error("❌ DB sync error:", error.message);
+  }
+}
   };
 
   const removeFromCart = async (itemId: string) => {
-    // 💥 ล้างออเดอร์เก่าทันทีหากผู้ใช้ลบสินค้าออกจากตะกร้า
+    // ล้างออเดอร์เก่าทันทีหากผู้ใช้ลบสินค้าออกจากตะกร้า
     clearPendingOrder();
 
     setCart(prevCart => prevCart.filter(item => item.id !== itemId));

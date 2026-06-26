@@ -4,6 +4,8 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { TrendingUp, DollarSign, ShoppingCart, Users, LayoutDashboard, Table as TableIcon } from "lucide-react";
 import { supabase } from "../../../../backend/supabaseClient";
 import { AdminTables } from "./TableAdminPage";
+import { useNavigate } from "react-router";
+import { toast } from 'sonner';
 
 const COLORS = ["#f59e0b", "#3b82f6", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
 
@@ -95,6 +97,8 @@ export function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     let isActive = true;
     const loadDashboardData = async () => {
@@ -147,6 +151,22 @@ export function AdminPage() {
     loadDashboardData();
     return () => { isActive = false; };
   }, []);
+  // ดักฟัง Session Expired ระหว่างเปิดหน้าเว็บทิ้งไว้
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth Event เกิดขึ้นใน Checkout:", event);
+
+      if (event === 'SIGNED_OUT' || !session) {
+        toast.error("Your session has expired. Returning to homepage.");
+        
+        navigate("/", { replace: true });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);

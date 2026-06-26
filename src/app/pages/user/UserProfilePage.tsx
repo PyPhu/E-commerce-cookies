@@ -90,33 +90,28 @@ export function UserProfilePage() {
 
   // end session supabase
   useEffect(() => {
-    // ฟังก์ชันเช็คสถานะเบื้องต้นทันทีที่เข้าหน้าเว็บ
-    const checkInitialAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log("No initial session found — Clearing storage");
-        // ลบข้อมูลผู้ใช้ใน LocalStorage ทันทีหากเปิดมาแล้วไม่มี Session
-        localStorage.removeItem("cookie-shop-user");
-      }
-    };
-    checkInitialAuth();
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    // ถ้าเปิดหน้าโปรไฟล์มาแล้ว "ไม่มีเซสชัน (ไม่ได้ล็อกอิน)"
+    if (!session) {
+      localStorage.removeItem("cookie-shop-user");
+    }
+  };
+  checkAuth();
 
-    // ดักฟัง Event ตลอดเวลา
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth Event เกิดขึ้น:", event);
+  // ดักฟังการเปลี่ยนแปลงสถานะระบบหลังจากนั้น
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // ใช้ Default Event 'SIGNED_OUT' เท่านั้นในการเคลียร์และเด้งหนี
+    if (event === 'SIGNED_OUT') {
+      localStorage.removeItem("cookie-shop-user");
+      navigate("/login");
+    }
+  });
 
-      if (event === 'SIGNED_OUT' || !session) {
-        console.log("Session expired or Signed Out — Clearing storage");
-      
-        // ลบข้อมูลใน LocalStorage 
-        localStorage.removeItem("cookie-shop-user");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  return () => {
+    subscription.unsubscribe();
+  };
+}, [navigate]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
