@@ -93,24 +93,25 @@ export function CheckoutPage() {
     };
   }, [navigate]);
 
+  const loadCartData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("cart_items")
+      .select("*")
+      .eq('customer_id', user.id);
+
+    if (data && data.length > 0) {
+      const formattedCart = data.map((item: any) => ({
+        ...item,
+        id: item.product_id, 
+      }));
+      setCart(formattedCart);
+    }
+  };
+
    useEffect(() => {
-    const loadCartData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("cart_items")
-        .select("*")
-        .eq('customer_id', user.id);
-
-      if (data && data.length > 0) {
-        const formattedCart = data.map((item: any) => ({
-          ...item,
-          id: item.product_id, 
-        }));
-        setCart(formattedCart);
-      }
-    };
     loadCartData();
   }, [setCart]);
 
@@ -137,8 +138,9 @@ export function CheckoutPage() {
         return;
       }
 
+      
       const grandTotal = totalPrice + shippingFee;
-
+      
       // ส่งข้อมูลให้เพื่อนนำไปปรับปรุงตาม Flow ที่คุยกันไว้
       const res = await fetch(
         `${SUPABASE_URL}/functions/v1/create-payment-qr`,
@@ -152,9 +154,11 @@ export function CheckoutPage() {
           body: JSON.stringify({ cart, userInfo, grandTotal, shippingFee }),
         }
       );
-
+      
       const data = await res.json();
-
+      
+      await loadCartData(); // ดึงข้อมูลตะกร้าใหม่ก่อนสร้าง QR เพื่อให้แน่ใจว่ามีข้อมูลล่าสุด
+      
       if (data.success) {
         // เซฟค่าเก็บไว้แค่ใน React State เพื่อใช้แสดงผลรูป QR ในคอมโพเนนต์เฉยๆ
         setQrCodeUrl(data.qrCodeUrl);
