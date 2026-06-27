@@ -37,6 +37,7 @@ export function CheckoutPage() {
   // เปลี่ยนมาเก็บค่าไว้แค่ใน React State ชั่วคราว (ไม่ยุ่งกับ LocalStorage แล้ว)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [orderId, setOrderId] = useState<number | null>(null);
+  const [qrTotal, setQrTotal] = useState<number>(0);
 
   const [isGeneratingQr, setIsGeneratingQr] = useState<boolean>(false);
   const [isSubmittingSlip, setIsSubmittingSlip] = useState<boolean>(false);
@@ -137,6 +138,7 @@ export function CheckoutPage() {
         // เซฟค่าเก็บไว้แค่ใน React State เพื่อใช้แสดงผลรูป QR ในคอมโพเนนต์เฉยๆ
         setQrCodeUrl(data.qrCodeUrl);
         setOrderId(Number(data.orderId));
+        setQrTotal(data.total);
         toast.success("PromptPay QR Generated!");
       } else {
         console.error("QR Generation error:", data);
@@ -329,7 +331,7 @@ export function CheckoutPage() {
               <p className="text-xs text-gray-400">
                 support with PromptPay <br />
                 total:{" "}
-                <b className="text-gray-700">฿{(totalPrice + shippingFee).toFixed(2)}</b>{" "}
+                <b className="text-gray-700">฿{qrTotal.toFixed(2)}</b>{" "}
                 successfully generated <br />
               </p>
 
