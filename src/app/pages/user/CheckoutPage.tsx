@@ -23,7 +23,7 @@ function fileToBase64(file: File): Promise<string> {
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, totalPrice, shippingFee, clearCart } = useCart();
+  const { cart, setCart, totalPrice, shippingFee, clearCart } = useCart();
 
   // ข้อมูลโปรไฟล์เริ่มต้นเป็นค่าว่าง (จะโหลดจาก Database มาหยอดให้ใน useEffect)
   const [userInfo, setUserInfo] = useState<UserInfo>({
@@ -92,6 +92,27 @@ export function CheckoutPage() {
       subscription.unsubscribe();
     };
   }, [navigate]);
+
+   useEffect(() => {
+    const loadCartData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("cart_items")
+        .select("*")
+        .eq('customer_id', user.id);
+
+      if (data && data.length > 0) {
+        const formattedCart = data.map((item: any) => ({
+          ...item,
+          id: item.product_id, 
+        }));
+        setCart(formattedCart);
+      }
+    };
+    loadCartData();
+  }, [setCart]);
 
   const handleCheckout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
