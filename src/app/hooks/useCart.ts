@@ -74,7 +74,7 @@ export function useCart() {
 
     let updatedQuantity = 1;
     let finalPrice = item.price;
-    const isCustom = item.id.includes('custom') || item.type === 'custom' || item.name.toLowerCase().includes('custom');
+    const isCustom = item.name.toLowerCase().includes('custom');
 
     if (isCustom) {
       finalPrice = item.toppings && item.toppings.length === 3 ? 409 : 399;

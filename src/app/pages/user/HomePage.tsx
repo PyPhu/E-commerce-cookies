@@ -43,7 +43,7 @@ export function HomePage() {
         }
 
         return {
-          id: String(p.id),
+          id: p.id,
           name: p.item,
           type: "menu" as const,
           price: p.price,
