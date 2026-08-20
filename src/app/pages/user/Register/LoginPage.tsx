@@ -146,6 +146,7 @@ export function LoginPage() {
           email: signupEmail,
           phone: signupPhone,
           address: signupAddress,
+          role: "user",
         },
         { onConflict: "email" }
       );
